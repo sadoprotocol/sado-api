@@ -174,6 +174,8 @@ export class OrderBook {
   async #filter(index: any, type: "order" | "offer", item?: any) {
     this.#increment(type);
 
+    console.log(index, type, item);
+
     if (item === undefined) {
       return this.#finalize();
     }
@@ -204,9 +206,7 @@ export class OrderBook {
 
     // ### Finalize
 
-    if (this.#isFinal()) {
-      await this.#finalize();
-    }
+    return this.#finalize();
   }
 
   #increment(type: "order" | "offer"): void {
@@ -226,11 +226,11 @@ export class OrderBook {
    |
    */
 
-  #isFinal() {
-    return this.#offerCount === this.cids.offers.length && this.#orderCount === this.cids.orders.length;
-  }
-
   async #finalize(): Promise<void> {
+    if (this.#offerCount === this.cids.offers.length && this.#orderCount === this.cids.orders.length) {
+      return; // not ready to finalize
+    }
+
     // ### Finalize Orders
 
     for (let i = 0; i < this.orders.length; i++) {
