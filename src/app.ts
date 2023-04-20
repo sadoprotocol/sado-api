@@ -59,6 +59,7 @@ app.use(function forwardError404(_req, _res, next) {
 
 // error handler
 app.use(function errorHandler(err, _req, res, _next) {
+  console.log(err);
   res.status(err.status || 500);
   res.json({
     success: false,
