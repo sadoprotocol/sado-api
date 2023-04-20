@@ -8,5 +8,14 @@
     {
       "mode": "auto"
     }
+  ],
+  "cSpell.words": [
+    "bitcoinjs",
+    "cids",
+    "ipfs",
+    "sado",
+    "txid",
+    "unspents",
+    "vout"
   ]
 }
