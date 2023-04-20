@@ -11,11 +11,18 @@
   ],
   "cSpell.words": [
     "bitcoinjs",
+    "blockhash",
+    "blocktime",
     "cids",
     "ipfs",
+    "locktime",
+    "orderbooks",
     "sado",
+    "satoshis",
     "txid",
+    "txinwitness",
     "unspents",
-    "vout"
+    "vout",
+    "vsize"
   ]
 }
