@@ -1,0 +1,4 @@
+PORT=3030
+NETWORK="regtest"
+LOOKUP_ENDPOINT="https://regtest.ordit.io/utxo"
+INFURA_GATEWAY="https://sado.infura-ipfs.io"
