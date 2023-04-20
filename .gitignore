@@ -8,6 +8,7 @@
 
 # Development
 
+.bin
 .env
 
 # Dependencies
