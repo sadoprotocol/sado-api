@@ -1,8 +1,15 @@
 # SADO Orderbook API
 
-<br>
-
 ## Setup
+
+### Prerequisites
+
+Make sure you have these installed on your local machine:
+
+- [Docker](https://docs.docker.com/engine/install/)
+- [Git](https://github.com/git-guides/install-git)
+
+### Configuration
 
 1. Create `.env` environment file
 
