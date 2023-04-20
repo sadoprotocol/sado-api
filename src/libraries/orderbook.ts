@@ -65,6 +65,8 @@ export class OrderBook {
 
     this.#resolveCids(txs);
 
+    // [TODO] Potentially consider a more atomic cache approach so we can more
+    //        easily perform incremental updates to SADO related data.
     // const cachedOrderBook = await this.#getCache();
     // if (cachedOrderBook !== undefined) {
     //   return cachedOrderBook;
@@ -93,10 +95,22 @@ export class OrderBook {
     }
   }
 
+  async #getCache() {
+    const redisKey = `/${config.network}/sado/get/${this.address}/orders-offers/${this.cids.orders.length}-${this.cids.offers.length}`;
+    const gotCache = await redis.get({ key: redisKey });
+    if (gotCache) {
+      return gotCache;
+    }
+  }
+
   /*
    |--------------------------------------------------------------------------------
    | Processors
    |--------------------------------------------------------------------------------
+   |
+   | Processes the cids of orders and offers. These are verified, filtered and
+   | finalized before being returned to the client.
+   |
    */
 
   async #processOrders(): Promise<void> {
@@ -108,6 +122,7 @@ export class OrderBook {
       if (order !== undefined) {
         const owner = await getOwner(order.location);
         if (order.type === "sell" && owner === order.maker) {
+          // [TODO] Run order through validation
           await this.#filter(i, "order", order);
         } else {
           await this.#filter(i, "order");
@@ -131,6 +146,7 @@ export class OrderBook {
             offer.order = origin;
             const owner = await getOwner(origin.location);
             if (owner === origin.maker || owner === offer.taker) {
+              // [TODO] Run offer through validation
               await this.#filter(i, "offer", offer);
             } else {
               await this.#filter(i, "offer");
@@ -145,18 +161,14 @@ export class OrderBook {
     }
   }
 
-  async #getCache() {
-    const redisKey = `/${config.network}/sado/get/${this.address}/orders-offers/${this.cids.orders.length}-${this.cids.offers.length}`;
-    const gotCache = await redis.get({ key: redisKey });
-    if (gotCache) {
-      return gotCache;
-    }
-  }
-
   /*
    |--------------------------------------------------------------------------------
-   | Filters
+   | Filter 
    |--------------------------------------------------------------------------------
+   |
+   | Filter incoming items representing orders and offers. If not item is given
+   | we simply perform a count increment to keep track of processed cids.
+   |
    */
 
   async #filter(index: any, type: "order" | "offer", item?: any) {
@@ -192,15 +204,33 @@ export class OrderBook {
 
     // ### Finalize
 
-    await this.#finalize();
+    if (this.#isFinal()) {
+      await this.#finalize();
+    }
+  }
+
+  #increment(type: "order" | "offer"): void {
+    if (type === "order") {
+      this.#orderCount++;
+    } else if (type === "offer") {
+      this.#offerCount++;
+    }
+  }
+
+  /*
+   |--------------------------------------------------------------------------------
+   | Finalize
+   |--------------------------------------------------------------------------------
+   |
+   | Once all orders and offers have been resolved, we can finalize the order book.
+   |
+   */
+
+  #isFinal() {
+    return this.#offerCount === this.cids.offers.length && this.#orderCount === this.cids.orders.length;
   }
 
   async #finalize(): Promise<void> {
-    const isFinal = this.#offerCount === this.cids.offers.length && this.#orderCount === this.cids.orders.length;
-    if (isFinal === false) {
-      return;
-    }
-
     // ### Finalize Orders
 
     for (let i = 0; i < this.orders.length; i++) {
@@ -252,14 +282,6 @@ export class OrderBook {
         this.offers[i].inscriptions = tx.vout[voutIndex].inscriptions;
         this.filtered.offers.push(this.offers[i]);
       }
-    }
-  }
-
-  #increment(type: "order" | "offer"): void {
-    if (type === "order") {
-      this.#orderCount++;
-    } else if (type === "offer") {
-      this.#offerCount++;
     }
   }
 }
