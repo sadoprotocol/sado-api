@@ -31,7 +31,7 @@ async function transaction(txid: string): Promise<Transaction | undefined> {
   }
   const tx = await get("/transaction", { txid });
   if (tx) {
-    void redis.setData({ key: txid, data: tx, expiration: 60 * 60 * 24 });
+    void redis.setData({ key: txid, data: tx });
   }
   return tx;
 }
@@ -168,4 +168,4 @@ export type Ordinal = {
   size: number;
 };
 
-export type Inscription = any;
+export type Inscription<T = unknown> = T;

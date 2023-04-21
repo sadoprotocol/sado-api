@@ -10,6 +10,7 @@
     }
   ],
   "cSpell.words": [
+    "BECH",
     "bitcoinjs",
     "blockhash",
     "blocktime",
@@ -17,6 +18,7 @@
     "ipfs",
     "locktime",
     "orderbooks",
+    "PSBT",
     "sado",
     "satoshi",
     "satoshis",

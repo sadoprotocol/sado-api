@@ -3,7 +3,10 @@ import type { Inscription, Ordinal } from "../services/lookup";
 
 export type OrderBookOrder = Order & OrderBookResponse;
 
-export type OrderBookOffer = Offer & OrderBookResponse;
+export type OrderBookOffer = Offer &
+  OrderBookResponse & {
+    order?: Order;
+  };
 
 export type OrderBookReject = {
   type: "order" | "offer";
