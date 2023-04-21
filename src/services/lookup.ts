@@ -130,7 +130,7 @@ type Vin = {
   sequence: number;
 };
 
-type Vout = {
+export type Vout = {
   value: number;
   n: number;
   scriptPubKey: ScriptPubKey;

@@ -40,6 +40,24 @@ export class OrderbookRejects {
     });
   }
 
+  orderTxNotFound(txid: string, order: OrderBookOrder): void {
+    this.#add({
+      type: "order",
+      code: "ORDER_TRANSACTION_NOT_FOUND",
+      message: `Order transaction '${txid}' does not exist`,
+      reject: order,
+    });
+  }
+
+  orderVoutOutOfRange(voutN: number, order: OrderBookOrder): void {
+    this.#add({
+      type: "order",
+      code: "ORDER_VOUT_OUT_OF_RANGE",
+      message: `Order vout '${voutN}' is out of range`,
+      reject: order,
+    });
+  }
+
   /*
    |--------------------------------------------------------------------------------
    | Offer Errors
@@ -78,6 +96,24 @@ export class OrderbookRejects {
       type: "offer",
       code: "OFFER_MISSING_ORDINALS_AND_INSCRIPTIONS",
       message: `Offer is missing ordinals and inscriptions`,
+      reject: offer,
+    });
+  }
+
+  offerTxNotFound(txid: string, offer: OrderBookOffer): void {
+    this.#add({
+      type: "offer",
+      code: "OFFER_TRANSACTION_NOT_FOUND",
+      message: `Offer transaction '${txid}' does not exist`,
+      reject: offer,
+    });
+  }
+
+  offerVoutOutOfRange(voutN: number, offer: OrderBookOffer): void {
+    this.#add({
+      type: "offer",
+      code: "OFFER_VOUT_OUT_OF_RANGE",
+      message: `Offer vout ${voutN} is out of range`,
       reject: offer,
     });
   }

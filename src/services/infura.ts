@@ -223,6 +223,17 @@ export type Offer = {
    * NOTE! This is required if the taker is using a BECH32 address.
    */
   desc?: string;
+} & OfferPartial;
+
+/**
+ * Offer partial is defines mutated fields of an offer used during the
+ * orderbook build process.
+ *
+ * [TODO] Find a better implementation for this during continued
+ *        orderbook development.
+ */
+type OfferPartial = {
+  order?: Order;
 };
 
 export type OrderType = "sell" | "buy";
