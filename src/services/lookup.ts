@@ -1,6 +1,7 @@
 import fetch, { RequestInit } from "node-fetch";
 
 import { config } from "../config";
+import { redis } from "./redis";
 
 export const lookup = {
   transactions,
@@ -24,7 +25,15 @@ async function transactions(address: string): Promise<Transaction[]> {
 }
 
 async function transaction(txid: string): Promise<Transaction | undefined> {
-  return get("/transaction", { txid });
+  const cachedTx = await redis.getData<Transaction>({ key: txid });
+  if (cachedTx) {
+    return cachedTx;
+  }
+  const tx = await get("/transaction", { txid });
+  if (tx) {
+    void redis.setData({ key: txid, data: tx, expiration: 60 * 60 * 24 });
+  }
+  return tx;
 }
 
 async function balance(address: string): Promise<Balance | undefined> {
