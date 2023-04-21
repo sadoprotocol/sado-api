@@ -1,69 +1,83 @@
 import * as Redis from "redis";
 
+let isOnline = false;
+
+/*
+ |--------------------------------------------------------------------------------
+ | Redis Client
+ |--------------------------------------------------------------------------------
+ */
+
 const redisClient = Redis.createClient({ url: process.env.REDIS_URL });
 
 redisClient
   .connect()
   .then(() => {
-    online = true;
+    isOnline = true;
     console.log("Redis client connected");
   })
   .catch(() => {
     console.log("Redis is not installed. Cache will not be used..");
   });
 
-let online = false;
+/*
+ |--------------------------------------------------------------------------------
+ | Service
+ |--------------------------------------------------------------------------------
+ */
 
 export const redis = {
-  set,
-  get,
+  setData,
+  getData,
 };
 
-function set(params: any) {
-  if (!online) return false;
+/*
+ |--------------------------------------------------------------------------------
+ | Service Methods
+ |--------------------------------------------------------------------------------
+ */
 
-  const expiration = params.expiration || false;
-  const key = params.key || false;
-  let data = params.data || false;
-
-  if (!key || !data) {
-    throw new Error("Expecting key and data.");
+async function setData({ key, data, expiration }: SetDataParams): Promise<void> {
+  if (isOnline === false) {
+    return;
   }
-
-  if (typeof data !== "string") {
-    data = JSON.stringify(data);
-  }
-
-  if (expiration) {
-    redisClient.setEx(key, expiration, data);
+  const dataString = JSON.stringify(data);
+  if (expiration !== undefined) {
+    await redisClient.setEx(key, expiration, dataString);
   } else {
-    redisClient.set(key, data);
+    await redisClient.set(key, dataString);
   }
 }
 
-async function get(params: any) {
-  if (!online) {
-    return false;
+async function getData<T extends Record<string, unknown>>(params: GetDataParams): Promise<T | undefined> {
+  if (isOnline === false) {
+    return;
   }
-  return new Promise((resolve, reject) => {
-    const key = params.key || false;
-    if (!key) {
-      reject(new Error("Expecting key."));
-    } else {
-      redisClient
-        .get(key)
-        .then((data) => {
-          if (data !== null) {
-            try {
-              resolve(JSON.parse(data));
-            } catch (err) {
-              resolve(data);
-            }
-          } else {
-            resolve(false);
-          }
-        })
-        .catch(reject);
-    }
-  });
+  if (!params.key) {
+    throw new Error("Expecting key.");
+  }
+  const data = await redisClient.get(params.key);
+  if (data !== null) {
+    return JSON.parse(data);
+  }
 }
+
+/*
+ |--------------------------------------------------------------------------------
+ | Types
+ |--------------------------------------------------------------------------------
+ */
+
+type SetDataParams = {
+  key: string;
+  data: Record<string, unknown>;
+
+  /**
+   * Expiration in `seconds` for automatic deletion of the key.
+   */
+  expiration?: number;
+};
+
+type GetDataParams = {
+  key: string;
+};
