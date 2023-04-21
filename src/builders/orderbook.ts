@@ -268,6 +268,15 @@ export class OrderBook {
  |--------------------------------------------------------------------------------
  */
 
+/**
+ * Check if a signature exists in the inputs of an offered transaction.
+ *
+ * [TODO] Verify that the signature was created by the maker of the offer.
+ *
+ * @param offer - Offer transaction hex.
+ *
+ * @returns `true` if a signature exists in the inputs of the offer transaction.
+ */
 function hasOfferSignature(offer: string): boolean {
   const temp_tx = bitcoinjs.Transaction.fromHex(offer);
   for (let v = 0; v < temp_tx.ins.length; v++) {
@@ -278,6 +287,15 @@ function hasOfferSignature(offer: string): boolean {
   return false;
 }
 
+/**
+ * Get order item from a vout scriptPubKey utf8 string.
+ *
+ * A valid order item contains a value in the format of `sado=order:cid` or `sado=offer:cid`.
+ *
+ * @param utf8 - ScriptPubKey utf8 string.
+ *
+ * @returns Order item or `undefined` if not found.
+ */
 function getOrderItem(utf8?: string): OrderItem | undefined {
   if (utf8?.includes("sado=") === true) {
     const vs = utf8.split("=");
@@ -304,6 +322,12 @@ async function getOwner(outpoint: string): Promise<string | undefined> {
     }
   }
 }
+
+/*
+ |--------------------------------------------------------------------------------
+ | Types
+ |--------------------------------------------------------------------------------
+ */
 
 type OrderItem = {
   type: "order" | "offer";
