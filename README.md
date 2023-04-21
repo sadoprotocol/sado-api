@@ -1,55 +1,60 @@
 # SADO Orderbook API
 
+A orderbook provider API for self-authenticating decentralized (interplanetary) ordinalbooks. It aims to provide a simple and easy to use API for developers to integrate with bitcoin ordinals.
+
+<br />
+
 ## Setup
+
+<br />
 
 ### Prerequisites
 
-Make sure you have these installed on your local machine:
+Make sure you have the following services installed in your local environment.
 
-- [Docker](https://docs.docker.com/engine/install/)
-- [Git](https://github.com/git-guides/install-git)
+| Service | Instructions                              |
+| ------- | ----------------------------------------- |
+| Docker  | https://docs.docker.com/engine/install    |
+| Git     | https://github.com/git-guides/install-git |
+
+<br />
 
 ### Configuration
 
-1. Create `.env` environment file
+Create `.env` environment file by copying the `dotenv` file from the project directory.
 
 ```sh
-# Make sure you are in the project directory
 $ cp dotenv .env
 ```
 
-2. Change the parameter of the file accordingly on `NETWORK` and `LOOKUP_ENDPOINT`
+Change the parameter of the file accordingly on `NETWORK` and `LOOKUP_ENDPOINT` variables using one of the following network values: `regtest`, `testnet`, `mainnet`.
 
-> `Regtest`: `regtest`
->
-> `Testnet`: `testnet`
->
-> `Mainnet`: `mainnet`
+<br />
 
-<br>
-
-3. Install packages
+### Install Dependencies
 
 ```sh
 $ npm install
 ```
 
-<br>
-
-4. To enable caching, install `Redis`, on Ubuntu
-
-```sh
-$ sudo apt update && sudo apt install redis
-```
-
-<br>
+<br />
 
 ## Running
 
-1. Start the application
+<br />
+
+### Docker Compose
+
+To enable API caching spin up `redis` via `docker-compose`.
+
+```sh
+$ docker-compose up -d
+```
+
+<br />
+
+### Start API
 
 ```sh
 $ npm start
 ```
-
-> For production, create a `systemd` file
