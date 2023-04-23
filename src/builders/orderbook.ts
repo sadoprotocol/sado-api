@@ -1,11 +1,12 @@
+import { parseLocation } from "../libraries/transaction";
 import { lookup, Vout } from "../services/lookup";
-import { OrderbookRejects } from "./rejects";
+import { OrderBookRejected } from "./rejected";
 import { OrderBookOffer, OrderBookOrder } from "./types";
 
 export class OrderBook {
   readonly orders: OrderBookOrder[] = [];
   readonly offers: OrderBookOffer[] = [];
-  readonly rejected = new OrderbookRejects();
+  readonly rejected = new OrderBookRejected();
   readonly completed: any[] = [];
 
   async addOrder(order: OrderBookOrder): Promise<void> {
@@ -74,9 +75,4 @@ export class OrderBook {
 
 function hasOrdinalsAndInscriptions(vout: Vout): boolean {
   return vout.ordinals.length > 0 && vout.inscriptions.length > 0;
-}
-
-function parseLocation(location: string): [string, number] {
-  const [txid, vout] = location.split(":");
-  return [txid, parseInt(vout)];
 }

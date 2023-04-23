@@ -1,13 +1,13 @@
-import * as bitcoinjs from "bitcoinjs-lib";
 import debug from "debug";
 import moment from "moment";
 
+import { hasSignature, parseLocation } from "../libraries/transaction";
 import { infura } from "../services/infura";
 import { lookup, Transaction } from "../services/lookup";
 import { OrderBook } from "./orderbook";
 import { OrderBookOffer, OrderBookOrder } from "./types";
 
-const log = debug("sado-orderbook");
+const log = debug("sado-orderbook-builder");
 
 type Options = {};
 
@@ -26,12 +26,14 @@ export class OrderBookBuilder {
    */
 
   async resolve(): Promise<this> {
+    log(`${this.address}: Resolving Orderbook`);
+
     const txs = await lookup.transactions(this.address);
     if (txs.length === 0) {
       return this;
     }
 
-    log("Found", txs.length, "transactions for", this.address);
+    log(`${this.address}: Found ${txs.length} transactions`);
 
     await this.#process(txs);
     await this.#build();
@@ -42,12 +44,12 @@ export class OrderBookBuilder {
   async #process(txs: Transaction[]): Promise<void> {
     for (const tx of txs) {
       for (const vout of tx.vout) {
-        const order = parseSadoOrder(vout.scriptPubKey.utf8);
-        if (order !== undefined) {
-          if (order.type === "order") {
-            await this.#handleOrder(order.cid);
-          } else if (order.type === "offer") {
-            await this.#handleOffer(order.cid);
+        const sado = parseSado(vout.scriptPubKey.utf8);
+        if (sado !== undefined) {
+          if (sado.type === "order") {
+            await this.#handleOrder(sado.cid);
+          } else if (sado.type === "offer") {
+            await this.#handleOffer(sado.cid);
           }
         }
       }
@@ -62,41 +64,44 @@ export class OrderBookBuilder {
 
   async #handleOrder(cid: string) {
     const order = await infura.getOrder(cid);
-    if (order !== undefined) {
-      const owner = await getOwner(order.location);
+    if ("error" in order) {
+      return this.orderbook.rejected.orderInfuraException(cid, order.error, order.data);
+    }
 
-      // [TODO] Handle case where order is not a sale and owner is not the maker
+    const owner = await getOwner(order.location);
+    if (owner === undefined) {
+      return this.orderbook.rejected.orderOwnerInvalid(cid, order);
+    }
 
-      if (order.type === "sell" && owner === order.maker) {
-        return this.#push(cid, "order", order);
-      }
-    } else {
-      this.orderbook.rejected.orderNotFound(cid);
+    if (order.type === "sell" && owner === order.maker) {
+      this.#push(cid, "order", order);
     }
   }
 
   async #handleOffer(cid: string) {
     const offer = await infura.getOffer(cid);
-    if (offer !== undefined) {
-      if (hasOfferSignature(offer.offer) === true) {
-        const origin = await infura.getOrder(offer.origin);
-        if (origin !== undefined) {
-          offer.order = origin;
-          const owner = await getOwner(origin.location);
+    if ("error" in offer) {
+      return this.orderbook.rejected.offerInfuraException(cid, offer.error, offer.data);
+    }
 
-          // [TODO] Handle cases where owner does not match either maker or taker
+    const order = await infura.getOrder(offer.origin);
+    if ("error" in order) {
+      return this.orderbook.rejected.offerOriginNotFound(cid, offer);
+    }
 
-          if (owner === origin.maker || owner === offer.taker) {
-            return this.#push(cid, "offer", offer);
-          }
-        } else {
-          this.orderbook.rejected.offerOriginNotFound(cid, offer);
-        }
-      } else {
-        this.orderbook.rejected.offerSignatureInvalid(cid, offer);
-      }
-    } else {
-      this.orderbook.rejected.offerNotFound(cid);
+    offer.order = order; // attach the order to the offer for downstream references
+
+    const owner = await getOwner(order.location);
+    if (owner === undefined) {
+      return this.orderbook.rejected.offerOwnerInvalid(cid, offer);
+    }
+
+    if (hasSignature(offer.offer) === false) {
+      return this.orderbook.rejected.offerSignatureInvalid(cid, offer);
+    }
+
+    if (owner === order.maker || owner === offer.taker) {
+      this.#push(cid, "offer", offer);
     }
   }
 
@@ -129,7 +134,7 @@ export class OrderBookBuilder {
    */
 
   async #build(): Promise<void> {
-    log("Building Orderbook");
+    log(`${this.address}: Building Orderbook`);
     for (const order of this.orders) {
       await this.orderbook.addOrder(order);
     }
@@ -145,24 +150,20 @@ export class OrderBookBuilder {
  |--------------------------------------------------------------------------------
  */
 
-/**
- * Check if a signature exists in the inputs of an offered transaction.
- *
- * [TODO] Verify that the signature was created by the maker of the offer.
- *
- * @param offer - Offer transaction hex.
- *
- * @returns `true` if a signature exists in the inputs of the offer transaction.
- */
-function hasOfferSignature(offer: string): boolean {
-  const temp_tx = bitcoinjs.Transaction.fromHex(offer);
-  for (let v = 0; v < temp_tx.ins.length; v++) {
-    if (temp_tx.ins[v].script.toString()) {
-      return true;
-    }
+async function getOwner(location: string): Promise<string | undefined> {
+  const [txid, vout] = parseLocation(location);
+  const tx = await lookup.transaction(txid);
+  if (tx === undefined) {
+    return undefined;
   }
-  return false;
+  return tx.vout[vout]?.scriptPubKey?.address;
 }
+
+/*
+ |--------------------------------------------------------------------------------
+ | Parsers
+ |--------------------------------------------------------------------------------
+ */
 
 /**
  * Get order item from a vout scriptPubKey utf8 string.
@@ -173,29 +174,12 @@ function hasOfferSignature(offer: string): boolean {
  *
  * @returns Order item or `undefined` if not found.
  */
-function parseSadoOrder(utf8?: string): SadoOrder | undefined {
+function parseSado(utf8?: string): SadoOrder | undefined {
   if (utf8?.includes("sado=") === true) {
     const vs = utf8.split("=");
     const [type, cid] = vs[1].split(":");
     if (type === "order" || type === "offer") {
       return { type, cid };
-    }
-  }
-}
-
-async function getOwner(outpoint: string): Promise<string | undefined> {
-  if (outpoint && outpoint.indexOf(":") > 0) {
-    const [txid, pos] = outpoint.split(":");
-    const index = parseInt(pos);
-    const res = await lookup.transaction(txid);
-    if (
-      typeof res === "object" &&
-      typeof res.vout === "object" &&
-      typeof res.vout[index] === "object" &&
-      typeof res.vout[index].scriptPubKey === "object" &&
-      typeof res.vout[index].scriptPubKey.address !== "undefined"
-    ) {
-      return res.vout[index].scriptPubKey.address;
     }
   }
 }

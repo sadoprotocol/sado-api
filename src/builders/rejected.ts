@@ -1,20 +1,8 @@
-import type { Offer } from "../services/infura";
+import type { Offer, Order } from "../services/infura";
 import type { OrderBookOffer, OrderBookOrder, OrderBookReject } from "./types";
 
-export class OrderbookRejects {
-  #count = 0;
-
-  readonly #rejects: OrderBookReject[] = [];
-
-  /*
-   |--------------------------------------------------------------------------------
-   | Accessors
-   |--------------------------------------------------------------------------------
-   */
-
-  get count() {
-    return this.#count;
-  }
+export class OrderBookRejected {
+  readonly #rejected: OrderBookReject[] = [];
 
   /*
    |--------------------------------------------------------------------------------
@@ -22,12 +10,22 @@ export class OrderbookRejects {
    |--------------------------------------------------------------------------------
    */
 
-  orderNotFound(cid: string): void {
+  orderInfuraException(cid: string, message: string, data: any): void {
     this.#add({
       type: "order",
-      code: "ORDER_NOT_FOUND",
-      message: `Order with CID '${cid}' does not exist`,
-      reject: cid,
+      code: "ORDER_INFURA_EXCEPTION",
+      message,
+      data,
+      order: cid,
+    });
+  }
+
+  orderOwnerInvalid(cid: string, order: Order): void {
+    this.#add({
+      type: "order",
+      code: "ORDER_OWNER_INVALID",
+      message: `Order CID '${cid}' has an invalid owner`,
+      order,
     });
   }
 
@@ -36,7 +34,7 @@ export class OrderbookRejects {
       type: "order",
       code: "ORDER_MISSING_ORDINALS_AND_INSCRIPTIONS",
       message: `Order is missing ordinals and inscriptions`,
-      reject: order,
+      order,
     });
   }
 
@@ -45,7 +43,7 @@ export class OrderbookRejects {
       type: "order",
       code: "ORDER_TRANSACTION_NOT_FOUND",
       message: `Order transaction '${txid}' does not exist`,
-      reject: order,
+      order,
     });
   }
 
@@ -54,7 +52,7 @@ export class OrderbookRejects {
       type: "order",
       code: "ORDER_VOUT_OUT_OF_RANGE",
       message: `Order vout '${voutN}' is out of range`,
-      reject: order,
+      order,
     });
   }
 
@@ -64,12 +62,22 @@ export class OrderbookRejects {
    |--------------------------------------------------------------------------------
    */
 
-  offerNotFound(cid: string): void {
+  offerInfuraException(cid: string, message: string, data: any): void {
     this.#add({
       type: "offer",
-      code: "OFFER_NOT_FOUND",
-      message: `Offer with CID '${cid}' does not exist`,
-      reject: cid,
+      code: "OFFER_INFURA_EXCEPTION",
+      message,
+      data,
+      offer: cid,
+    });
+  }
+
+  offerOwnerInvalid(cid: string, offer: Offer): void {
+    this.#add({
+      type: "offer",
+      code: "OFFER_OWNER_INVALID",
+      message: `Offer CID '${cid}' has an invalid owner`,
+      offer,
     });
   }
 
@@ -77,8 +85,8 @@ export class OrderbookRejects {
     this.#add({
       type: "offer",
       code: "OFFER_SIGNATURE_INVALID",
-      message: `Offer with CID '${cid}' has an invalid offer signature`,
-      reject: offer,
+      message: `Offer CID '${cid}' has an invalid offer signature`,
+      offer,
     });
   }
 
@@ -86,8 +94,8 @@ export class OrderbookRejects {
     this.#add({
       type: "offer",
       code: "OFFER_ORIGIN_NOT_FOUND",
-      message: `Offer with CID '${cid}' is missing origin order`,
-      reject: offer,
+      message: `Offer CID '${cid}' is missing origin order`,
+      offer,
     });
   }
 
@@ -96,7 +104,7 @@ export class OrderbookRejects {
       type: "offer",
       code: "OFFER_MISSING_ORDINALS_AND_INSCRIPTIONS",
       message: `Offer is missing ordinals and inscriptions`,
-      reject: offer,
+      offer,
     });
   }
 
@@ -105,7 +113,7 @@ export class OrderbookRejects {
       type: "offer",
       code: "OFFER_TRANSACTION_NOT_FOUND",
       message: `Offer transaction '${txid}' does not exist`,
-      reject: offer,
+      offer,
     });
   }
 
@@ -114,7 +122,7 @@ export class OrderbookRejects {
       type: "offer",
       code: "OFFER_VOUT_OUT_OF_RANGE",
       message: `Offer vout ${voutN} is out of range`,
-      reject: offer,
+      offer,
     });
   }
 
@@ -125,8 +133,7 @@ export class OrderbookRejects {
    */
 
   #add(reject: OrderBookReject) {
-    this.#rejects.push(reject);
-    this.#count++;
+    this.#rejected.push(reject);
   }
 
   /*
@@ -136,6 +143,6 @@ export class OrderbookRejects {
    */
 
   toJSON() {
-    return this.#rejects;
+    return this.#rejected;
   }
 }

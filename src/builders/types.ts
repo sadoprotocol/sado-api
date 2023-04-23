@@ -6,10 +6,19 @@ export type OrderBookOrder = Order & OrderBookResponse;
 export type OrderBookOffer = Offer & OrderBookResponse;
 
 export type OrderBookReject = {
-  type: "order" | "offer";
   code: string;
   message: string;
-  reject: Order | Offer | OrderBookOrder | OrderBookOffer | string;
+  data?: any;
+} & (OrderBookRejectedOrder | OrderBookRejectedOffer);
+
+export type OrderBookRejectedOrder = {
+  type: "order";
+  order: Order | OrderBookOrder | string;
+};
+
+export type OrderBookRejectedOffer = {
+  type: "offer";
+  offer: Offer | OrderBookOffer | string;
 };
 
 type OrderBookResponse = {
