@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 
 import { config } from "../config";
-import { makeObjectKeyChecker } from "../libraries/are-keys-present";
+import { makeObjectKeyChecker } from "../libraries/object";
 import { redis } from "./redis";
 
 const FETCH_REQUEST_DEFAULTS = {
@@ -32,28 +32,26 @@ export const infura = {
  |--------------------------------------------------------------------------------
  */
 
-async function getOrder(cid: string): Promise<Order | undefined> {
-  const cachedData = await redis.getData<Order>({ key: cid });
-  if (cachedData) {
-    return cachedData;
+async function getOrder(cid: string): Promise<InfuraResponse<Order>> {
+  const data = await get<Order>(cid);
+  if (data === undefined) {
+    return errorResponse(`Order CID '${cid}' not found`);
   }
-  const data = await get(cid);
-  if (data !== undefined && hasValidOrderKeys(data)) {
-    void redis.setData({ key: cid, data });
-    return data;
+  if (hasValidOrderKeys(data) === false) {
+    return errorResponse(`Malformed CID '${cid}', order missing required keys`, data);
   }
+  return successResponse(data);
 }
 
-async function getOffer(cid: string): Promise<Offer | undefined> {
-  const cachedData = await redis.getData<Offer>({ key: cid });
-  if (cachedData) {
-    return cachedData;
+async function getOffer(cid: string): Promise<InfuraResponse<Offer>> {
+  const data = await get<Offer>(cid);
+  if (data === undefined) {
+    return errorResponse(`Offer CID '${cid}' not found`);
   }
-  const data = await get(cid);
-  if (data !== undefined && hasValidOfferKeys(data)) {
-    void redis.setData({ key: cid, data });
-    return data;
+  if (hasValidOfferKeys(data) === false) {
+    return errorResponse(`Malformed CID '${cid}', offer missing required keys`, data);
   }
+  return successResponse(data);
 }
 
 /*
@@ -62,11 +60,25 @@ async function getOffer(cid: string): Promise<Offer | undefined> {
  |--------------------------------------------------------------------------------
  */
 
-async function get(cid: string): Promise<any | undefined> {
+async function get<Data extends Order | Offer>(cid: string): Promise<Data | undefined> {
+  const cachedData = await redis.getData<Data>({ key: cid });
+  if (cachedData) {
+    return cachedData;
+  }
   const response = await fetch(config.infuraGateway + "/ipfs/" + cid, FETCH_REQUEST_DEFAULTS);
   if (response.status === 200) {
-    return response.json();
+    const data = await response.json();
+    void redis.setData({ key: cid, data });
+    return data;
   }
+}
+
+function successResponse<Data extends Order | Offer>(data: Data): InfuraResponse<Data> {
+  return data;
+}
+
+function errorResponse(error: string, data = {}): InfuraResponse<any> {
+  return { error, data };
 }
 
 /*
@@ -74,6 +86,13 @@ async function get(cid: string): Promise<any | undefined> {
  | Types
  |--------------------------------------------------------------------------------
  */
+
+type InfuraResponse<Data extends Order | Offer> =
+  | Data
+  | {
+      error: string;
+      data: any;
+    };
 
 /**
  * Order is created by either a seller or buyer.

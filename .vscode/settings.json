@@ -10,21 +10,24 @@
     }
   ],
   "cSpell.words": [
-    "BECH",
+    "bech32",
     "bitcoinjs",
     "blockhash",
     "blocktime",
+    "btcjs",
     "cids",
     "ipfs",
     "locktime",
     "orderbooks",
-    "PSBT",
+    "p2wpkh",
+    "psbt",
     "sado",
     "satoshi",
     "satoshis",
     "txid",
     "txinwitness",
     "unspents",
+    "utxo",
     "vout",
     "vsize"
   ]
