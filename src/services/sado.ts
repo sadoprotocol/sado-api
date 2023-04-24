@@ -1,7 +1,7 @@
-import { OrderBookBuilder } from "../builders/builder";
+import { OrderBook } from "../orderbook/orderbook";
 
 export async function get(address: string): Promise<any> {
-  const builder = new OrderBookBuilder(address);
-  await builder.resolve();
-  return builder.orderbook.toJSON();
+  const orderbook = new OrderBook(address);
+  await orderbook.resolve();
+  return orderbook.toJSON();
 }
