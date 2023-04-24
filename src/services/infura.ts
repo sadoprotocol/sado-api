@@ -38,7 +38,7 @@ async function getOrder(cid: string): Promise<InfuraResponse<Order>> {
     return errorResponse(`Order CID '${cid}' not found`);
   }
   if (hasValidOrderKeys(data) === false) {
-    return errorResponse(`Malformed CID '${cid}', order missing required keys`, data);
+    return errorResponse<Order>(`Malformed CID '${cid}', order missing required keys`, data);
   }
   return successResponse(data);
 }
@@ -49,7 +49,7 @@ async function getOffer(cid: string): Promise<InfuraResponse<Offer>> {
     return errorResponse(`Offer CID '${cid}' not found`);
   }
   if (hasValidOfferKeys(data) === false) {
-    return errorResponse(`Malformed CID '${cid}', offer missing required keys`, data);
+    return errorResponse<Offer>(`Malformed CID '${cid}', offer missing required keys`, data);
   }
   return successResponse(data);
 }
@@ -77,7 +77,7 @@ function successResponse<Data extends Order | Offer>(data: Data): InfuraResponse
   return data;
 }
 
-function errorResponse(error: string, data = {}): InfuraResponse<any> {
+function errorResponse<Data extends Order | Offer>(error: string, data?: Data): InfuraResponse<any> {
   return { error, data };
 }
 
@@ -91,7 +91,7 @@ type InfuraResponse<Data extends Order | Offer> =
   | Data
   | {
       error: string;
-      data: any;
+      data: Data;
     };
 
 /**
