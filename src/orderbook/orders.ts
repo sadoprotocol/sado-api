@@ -6,6 +6,7 @@ import { lookup, Vout } from "../services/lookup";
 import {
   ContentMissingException,
   InfuraException,
+  InvalidOrderMakerException,
   InvalidOwnerLocationException,
   TransactionNotFoundException,
   VoutOutOfRangeException,
@@ -43,7 +44,7 @@ export class Orders {
     }
 
     if ((order.type === "sell" && owner === order.maker) === false) {
-      return console.log("SKIPPING ORDER", cid); // [TODO] Generate exceptions for type and maker rejections
+      return this.#reject(cid, order, new InvalidOrderMakerException(order.type, owner, order.maker));
     }
 
     const [txid, voutN] = parseLocation(order.location);

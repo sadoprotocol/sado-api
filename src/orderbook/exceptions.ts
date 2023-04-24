@@ -43,3 +43,19 @@ export class InvalidSignatureException extends SadoException {
     super("INVALID_SIGNATURE", `Invalid signature`);
   }
 }
+
+export class InvalidOrderMakerException extends SadoException {
+  constructor(type: "sell" | "buy", owner: string, maker: string) {
+    super("INVALID_ORDER_MAKER", `Maker associated with the '${type}' order is invalid`, { owner, maker });
+  }
+}
+
+export class InvalidOfferOwnerException extends SadoException {
+  constructor(owner: string, maker: string, taker: string) {
+    super("INVALID_OFFER_OWNER", `No valid owner was found on the maker or taker of the offer`, {
+      owner,
+      maker,
+      taker,
+    });
+  }
+}
