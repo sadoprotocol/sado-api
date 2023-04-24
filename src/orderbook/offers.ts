@@ -6,6 +6,7 @@ import { lookup, Vout } from "../services/lookup";
 import {
   ContentMissingException,
   InfuraException,
+  InvalidOfferOwnerException,
   InvalidOwnerLocationException,
   InvalidSignatureException,
   OriginNotFoundException,
@@ -54,7 +55,7 @@ export class Offers {
     }
 
     if ((owner === order.maker || owner === offer.taker) === false) {
-      return console.log("SKIPPING OFFER", cid); // [TODO] Generate exceptions for owner maker and taker rejections
+      return this.#reject(cid, offer, new InvalidOfferOwnerException(owner, order.maker, offer.taker));
     }
 
     const [txid, voutN] = parseLocation(order!.location);
