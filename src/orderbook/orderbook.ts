@@ -1,5 +1,4 @@
 import debug from "debug";
-import moment from "moment";
 
 import { lookup, Transaction } from "../services/lookup";
 import { Offers } from "./offers";
@@ -14,12 +13,6 @@ export class OrderBook {
   readonly offers = new Offers();
 
   constructor(readonly address: string, readonly options: Options = {}) {}
-
-  /*
-   |--------------------------------------------------------------------------------
-   | Resolvers
-   |--------------------------------------------------------------------------------
-   */
 
   async resolve(): Promise<this> {
     log(`${this.address}: Resolving Orderbook`);
@@ -48,30 +41,6 @@ export class OrderBook {
           }
         }
       }
-    }
-  }
-
-  /*
-   |--------------------------------------------------------------------------------
-   | Handlers
-   |--------------------------------------------------------------------------------
-   */
-
-  async #push(cid: string, type: "order" | "offer", item?: any): Promise<void> {
-    if (item.type === "buy") {
-      item.buy = true;
-      item.sell = false;
-    } else {
-      item.buy = false;
-      item.sell = true;
-    }
-    item.ago = moment(item.ts).fromNow();
-    if (type === "order") {
-      item.cid = cid;
-      this.orders.push(item);
-    } else if (type === "offer") {
-      item.cid = cid;
-      this.offers.push(item);
     }
   }
 
