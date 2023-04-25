@@ -4,17 +4,18 @@ import { parseLocation } from "../libraries/transaction";
 import { infura, Order } from "../services/infura";
 import { lookup, Vout } from "../services/lookup";
 import {
-  ContentMissingException,
   InfuraException,
   InvalidOrderMakerException,
   InvalidOwnerLocationException,
-  TransactionNotFoundException,
+  OrdinalNotFoundException,
   VoutOutOfRangeException,
 } from "./exceptions";
-import { ItemContent, ItemRejectedStatus, ItemStatus } from "./types";
+import { ItemContent, ItemException } from "./types";
 
 export class Orders {
-  readonly #items: OrderItem[] = [];
+  readonly #pending: OrderItem[] = [];
+  readonly #rejected: RejectedOrderItem[] = [];
+  readonly #completed: OrderItem[] = [];
 
   /*
    |--------------------------------------------------------------------------------
@@ -22,8 +23,16 @@ export class Orders {
    |--------------------------------------------------------------------------------
    */
 
-  get items() {
-    return this.#items;
+  get pending() {
+    return this.#pending;
+  }
+
+  get rejected() {
+    return this.#rejected;
+  }
+
+  get completed() {
+    return this.#completed;
   }
 
   /*
@@ -47,13 +56,13 @@ export class Orders {
       return this.#reject(cid, order, new InvalidOrderMakerException(order.type, owner, order.maker));
     }
 
-    const [txid, voutN] = parseLocation(order.location);
+    // ### Validate Ordinal
 
-    // ### Validate Order
+    const [txid, voutN] = parseLocation(order.location);
 
     const tx = await lookup.transaction(txid);
     if (tx === undefined) {
-      return this.#reject(cid, order, new TransactionNotFoundException(txid));
+      return this.#reject(cid, order, new OrdinalNotFoundException(txid, voutN));
     }
 
     const vout = tx.vout.find((item) => item.n === voutN);
@@ -62,34 +71,41 @@ export class Orders {
     }
 
     if (hasOrdinalsAndInscriptions(vout) === false) {
-      return this.#reject(cid, order, new ContentMissingException());
+      return this.#complete(cid, order);
     }
 
     // ### Add Order
 
-    this.#add(cid, order, vout, "pending"); // [TODO] Get completion status of the order ...
+    this.#add(cid, order, vout);
   }
 
-  #add(cid: string, order: Order, vout: Vout, status: "pending" | "completed"): void {
-    this.#items.push({
-      status,
-      cid,
-      ago: moment(order.ts).fromNow(),
-      ...this.#getTypeMap(order),
+  #add(cid: string, order: Order, vout: Vout): void {
+    this.#pending.push({
       ...order,
+      ...this.#getTypeMap(order),
+      ago: moment(order.ts).fromNow(),
+      cid,
       ordinals: vout.ordinals,
       inscriptions: vout.inscriptions,
     });
   }
 
-  #reject(cid: string, order: Order, reason: ItemRejectedStatus["reason"]): void {
-    this.#items.push({
-      status: "rejected",
+  #reject(cid: string, order: Order, reason: ItemException): void {
+    this.#rejected.push({
       reason,
-      cid,
-      ago: moment(order.ts).fromNow(),
-      ...this.#getTypeMap(order),
       ...order,
+      ...this.#getTypeMap(order),
+      ago: moment(order.ts).fromNow(),
+      cid,
+    });
+  }
+
+  #complete(cid: string, order: Order): void {
+    this.#completed.push({
+      ...order,
+      ...this.#getTypeMap(order),
+      ago: moment(order.ts).fromNow(),
+      cid,
     });
   }
 
@@ -114,4 +130,6 @@ async function getOwner(location: string): Promise<string | undefined> {
   return tx.vout[vout]?.scriptPubKey?.address;
 }
 
-type OrderItem = ItemStatus & { cid: string; ago: string; buy: boolean; sell: boolean } & Order & ItemContent;
+type OrderItem = Order & { order?: Order; buy: boolean; sell: boolean; ago: string; cid: string } & ItemContent;
+
+type RejectedOrderItem = { reason: ItemException } & OrderItem;

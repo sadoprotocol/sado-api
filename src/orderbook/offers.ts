@@ -1,22 +1,24 @@
 import moment from "moment";
 
 import { hasSignature, parseLocation } from "../libraries/transaction";
-import { infura, Offer } from "../services/infura";
-import { lookup, Vout } from "../services/lookup";
+import { infura, Offer, Order } from "../services/infura";
+import { lookup, Transaction, Vout } from "../services/lookup";
 import {
-  ContentMissingException,
   InfuraException,
   InvalidOfferOwnerException,
   InvalidOwnerLocationException,
   InvalidSignatureException,
+  OrdinalsMovedException,
   OriginNotFoundException,
   TransactionNotFoundException,
   VoutOutOfRangeException,
 } from "./exceptions";
-import { ItemContent, ItemRejectedStatus, ItemStatus } from "./types";
+import { ItemContent, ItemException } from "./types";
 
 export class Offers {
-  readonly #items: OfferItem[] = [];
+  readonly #pending: PendingOfferItem[] = [];
+  readonly #rejected: RejectedOfferItem[] = [];
+  readonly #completed: CompletedOfferItem[] = [];
 
   /*
    |--------------------------------------------------------------------------------
@@ -24,8 +26,16 @@ export class Offers {
    |--------------------------------------------------------------------------------
    */
 
-  get items() {
-    return this.#items;
+  get pending() {
+    return this.#pending;
+  }
+
+  get rejected() {
+    return this.#rejected;
+  }
+
+  get completed() {
+    return this.#completed;
   }
 
   /*
@@ -44,6 +54,8 @@ export class Offers {
     if ("error" in order) {
       return this.#reject(cid, offer, new OriginNotFoundException(offer.origin));
     }
+
+    offer.order = order;
 
     const owner = await getOwner(order.location);
     if (owner === undefined) {
@@ -73,34 +85,51 @@ export class Offers {
     }
 
     if (hasOrdinalsAndInscriptions(vout) === false) {
-      return this.#reject(cid, offer, new ContentMissingException());
+      if (order.type === "sell") {
+        const tx = await getTakerTransaction(txid, order, offer);
+        if (tx === undefined) {
+          return this.#reject(cid, offer, new OrdinalsMovedException());
+        }
+      } else if (order.type === "buy") {
+        console.log("SOMEONE BE OFFERING BUYING STUFF");
+        return this.#reject(cid, offer, new OrdinalsMovedException());
+      }
+      return this.#complete(cid, offer, tx);
     }
 
     // ### Add Offer
 
-    this.#add(cid, offer, vout, "pending"); // [TODO] Get completion status of the offer ...
+    this.#add(cid, offer, vout);
   }
 
-  #add(cid: string, offer: Offer, vout: Vout, status: "pending" | "completed"): void {
-    this.#items.push({
-      status,
-      cid,
-      ago: moment(offer.ts).fromNow(),
-      ...this.#getTypeMap(offer),
+  #add(cid: string, offer: Offer, vout: Vout): void {
+    this.#pending.push({
       ...offer,
+      ...this.#getTypeMap(offer),
+      ago: moment(offer.ts).fromNow(),
+      cid,
       ordinals: vout.ordinals,
       inscriptions: vout.inscriptions,
     });
   }
 
-  #reject(cid: string, offer: Offer, reason: ItemRejectedStatus["reason"]): void {
-    this.#items.push({
-      status: "rejected",
+  #reject(cid: string, offer: Offer, reason: ItemException): void {
+    this.#rejected.push({
       reason,
-      cid,
-      ago: moment(offer.ts).fromNow(),
-      ...this.#getTypeMap(offer),
       ...offer,
+      ...this.#getTypeMap(offer),
+      ago: moment(offer.ts).fromNow(),
+      cid,
+    });
+  }
+
+  #complete(cid: string, offer: Offer, proof: Transaction): void {
+    this.#completed.push({
+      ...offer,
+      ...this.#getTypeMap(offer),
+      ago: moment(offer.ts).fromNow(),
+      cid,
+      proof,
     });
   }
 
@@ -116,6 +145,32 @@ function hasOrdinalsAndInscriptions(vout: Vout): boolean {
   return vout.ordinals.length > 0 && vout.inscriptions.length > 0;
 }
 
+/**
+ * Get confirmed transaction from takers list of transactions.
+ *
+ * @param txid  - Order location transaction id.
+ * @param order - Order which the offer is based on.
+ * @param offer - Offer to get transaction for.
+ *
+ * @returns Transaction if found, undefined otherwise.
+ */
+async function getTakerTransaction(txid: string, order: Order, offer: Offer): Promise<Transaction | undefined> {
+  const txs = await lookup.transactions(offer.taker);
+  for (const tx of txs) {
+    for (const vin of tx.vin) {
+      const value = order.cardinals ?? order.satoshis ?? 0;
+      if (
+        vin.txid === txid &&
+        tx.vout[0]?.scriptPubKey.address === offer.taker &&
+        tx.vout[1]?.scriptPubKey.address === order.maker &&
+        tx.vout[1]?.value === value / 100_000_000
+      ) {
+        return tx;
+      }
+    }
+  }
+}
+
 async function getOwner(location: string): Promise<string | undefined> {
   const [txid, vout] = parseLocation(location);
   const tx = await lookup.transaction(txid);
@@ -125,4 +180,10 @@ async function getOwner(location: string): Promise<string | undefined> {
   return tx.vout[vout]?.scriptPubKey?.address;
 }
 
-type OfferItem = ItemStatus & { cid: string; ago: string; buy: boolean; sell: boolean } & Offer & ItemContent;
+type PendingOfferItem = Offer & OfferMeta & ItemContent;
+
+type RejectedOfferItem = { reason: ItemException } & Offer & OfferMeta;
+
+type CompletedOfferItem = Offer & OfferMeta & { proof: Transaction };
+
+type OfferMeta = { order?: Order; buy: boolean; sell: boolean; ago: string; cid: string };
