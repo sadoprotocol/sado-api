@@ -30,6 +30,7 @@
     "unspents",
     "utxo",
     "vout",
-    "vsize"
+    "vsize",
+    "webfactory"
   ]
 }
