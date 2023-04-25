@@ -14,6 +14,12 @@ export class InvalidOwnerLocationException extends SadoException {
   }
 }
 
+export class OrdinalNotFoundException extends SadoException {
+  constructor(txid: string, voutN: number) {
+    super("ORDINAL_NOT_FOUND", "Ordinal does not exist on transaction", { txid, voutN });
+  }
+}
+
 export class TransactionNotFoundException extends SadoException {
   constructor(txid: string) {
     super("TRANSACTION_NOT_FOUND", `Transaction does not exist`, { txid });
@@ -26,9 +32,9 @@ export class VoutOutOfRangeException extends SadoException {
   }
 }
 
-export class ContentMissingException extends SadoException {
+export class OrdinalsMovedException extends SadoException {
   constructor() {
-    super("CONTENT_MISSING", `Missing ordinals and/or inscriptions`);
+    super("ORDINALS_MOVES", "Ordinals are no longer present in the transaction");
   }
 }
 

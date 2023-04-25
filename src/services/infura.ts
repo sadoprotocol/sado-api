@@ -160,7 +160,7 @@ export type Order<Meta extends Record<string, unknown> = Record<string, unknown>
    *
    * @deprecated this value is slated to be removed in favor of `cardinals`.
    */
-  satoshis?: string;
+  satoshis?: number;
 
   /**
    * Amount of satoshis required/offered to execute the fulfill the order.

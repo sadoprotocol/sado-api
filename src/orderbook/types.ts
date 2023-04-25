@@ -32,19 +32,10 @@ type OrderBookResponse = {
 
 // ---
 
-export type ItemStatus =
-  | {
-      status: "pending" | "completed";
-    }
-  | ItemRejectedStatus;
-
-export type ItemRejectedStatus = {
-  status: "rejected";
-  reason: {
-    code: string;
-    message: string;
-    data?: any;
-  };
+export type ItemException = {
+  code: string;
+  message: string;
+  data?: any;
 };
 
 export type ItemContent = {

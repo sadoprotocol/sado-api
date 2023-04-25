@@ -4,7 +4,7 @@ import { lookup, Transaction } from "../services/lookup";
 import { Offers } from "./offers";
 import { Orders } from "./orders";
 
-const log = debug("sado-orderbook-builder");
+const log = debug("sado-orderbook");
 
 type Options = {};
 
@@ -15,14 +15,14 @@ export class OrderBook {
   constructor(readonly address: string, readonly options: Options = {}) {}
 
   async resolve(): Promise<this> {
-    log(`${this.address}: Resolving Orderbook`);
+    log(`Resolving Orderbook`);
 
     const txs = await lookup.transactions(this.address);
     if (txs.length === 0) {
       return this;
     }
 
-    log(`${this.address}: Found ${txs.length} transactions`);
+    log(`Found ${txs.length} transactions`);
 
     await this.#process(txs);
 
@@ -46,8 +46,10 @@ export class OrderBook {
 
   toJSON() {
     return {
-      orders: this.orders.items,
-      offers: this.offers.items,
+      orders: this.orders.pending,
+      offers: this.offers.pending,
+      rejected: [...this.orders.rejected, ...this.offers.rejected],
+      completed: [...this.orders.completed, ...this.offers.completed],
     };
   }
 }
