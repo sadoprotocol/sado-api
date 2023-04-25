@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+      - name: Deploy to EC2
+        uses: easingthemes/ssh-deploy@3884c8554ff45c0fd37d3f12a76288d06ce7a2ff #4.1.8
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.EC2_SSH_HOST }}
+          REMOTE_USER: ${{ secrets.EC2_SSH_USER }}
+          TARGET: "/home/ubuntu/sado-api"
+          EXCLUDE: "/.github/,/.vscode/,/.git/"
+
+      - name: Build & Release
+        uses: appleboy/ssh-action@334f9259f2f8eb3376d33fa4c684fff373f2c2a6 #0.1.10
+        with:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_SSH_HOST }}
+          username: ${{ secrets.EC2_SSH_USER }}
+          script: |
+            PATH=$PATH:/home/ubuntu/.nvm/versions/node/v18.16.0/bin
+            cd ~/sado-api
+            npm i
+            npm run build
+            pm2 restart sado-api
