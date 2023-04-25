@@ -6,7 +6,8 @@
     "prepare": "husky install",
     "build": "tsc",
     "start": "DEBUG=sado-* ts-node-dev ./src/main.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "lint": "eslint --ext .ts src"
   },
   "dependencies": {
     "bitcoinjs-lib": "5.1.2",
@@ -37,8 +38,15 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-simple-import-sort": "^10.0.0",
+    "git-commit-msg-linter": "^4.10.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.1",
+    "prettier": "^2.8.8",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.0.4"
+  },
+  "lint-staged": {
+    "**/*.ts": "prettier --write --ignore-unknown"
   },
   "engines": {
     "node": "^18.0.0"
