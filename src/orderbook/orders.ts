@@ -1,3 +1,4 @@
+import debug from "debug";
 import moment from "moment";
 
 import { parseLocation } from "../libraries/transaction";
@@ -11,6 +12,8 @@ import {
   VoutOutOfRangeException,
 } from "./exceptions";
 import { ItemContent, ItemException } from "./types";
+
+const log = debug("sado-orders");
 
 export class Orders {
   readonly #pending: OrderItem[] = [];
@@ -42,6 +45,8 @@ export class Orders {
    */
 
   async push(cid: string): Promise<void> {
+    log(`Resolving order ${cid}`);
+
     const order = await infura.getOrder(cid);
     if ("error" in order) {
       return this.#reject(cid, order.data, new InfuraException(order.error, { cid }));

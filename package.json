@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "start": "DEBUG=sado-* ts-node-dev ./src/main.ts"
+    "start": "DEBUG=sado-* ts-node-dev ./src/main.ts",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "bitcoinjs-lib": "5.1.2",

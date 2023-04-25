@@ -1,8 +1,10 @@
+import debug from "debug";
 import moment from "moment";
 
 import { hasSignature, parseLocation } from "../libraries/transaction";
 import { infura, Offer, Order } from "../services/infura";
 import { lookup, Transaction, Vout } from "../services/lookup";
+import { redis } from "../services/redis";
 import {
   InfuraException,
   InvalidOfferOwnerException,
@@ -14,6 +16,8 @@ import {
   VoutOutOfRangeException,
 } from "./exceptions";
 import { ItemContent, ItemException } from "./types";
+
+const log = debug("sado-offers");
 
 export class Offers {
   readonly #pending: PendingOfferItem[] = [];
@@ -45,6 +49,8 @@ export class Offers {
    */
 
   async push(cid: string): Promise<void> {
+    log(`Resolving offer ${cid}`);
+
     const offer = await infura.getOffer(cid);
     if ("error" in offer) {
       return this.#reject(cid, offer.data, new InfuraException(offer.error, { cid }));
@@ -91,7 +97,6 @@ export class Offers {
           return this.#reject(cid, offer, new OrdinalsMovedException());
         }
       } else if (order.type === "buy") {
-        console.log("SOMEONE BE OFFERING BUYING STUFF");
         return this.#reject(cid, offer, new OrdinalsMovedException());
       }
       return this.#complete(cid, offer, tx);
@@ -155,6 +160,19 @@ function hasOrdinalsAndInscriptions(vout: Vout): boolean {
  * @returns Transaction if found, undefined otherwise.
  */
 async function getTakerTransaction(txid: string, order: Order, offer: Offer): Promise<Transaction | undefined> {
+  log(`Looking up taker transaction for taker ${offer.taker}`);
+
+  // ### Check Cache
+
+  const cacheKey = `${txid}/${order.maker}/${offer.taker}`;
+  const cached = await redis.getData<Transaction>({ key: cacheKey });
+  if (cached !== undefined) {
+    log(`Found taker transaction ${cached.txid} for taker ${offer.taker} in cache`);
+    return cached;
+  }
+
+  // ### Check Ordit
+
   const txs = await lookup.transactions(offer.taker);
   for (const tx of txs) {
     for (const vin of tx.vin) {
@@ -165,6 +183,8 @@ async function getTakerTransaction(txid: string, order: Order, offer: Offer): Pr
         tx.vout[1]?.scriptPubKey.address === order.maker &&
         tx.vout[1]?.value === value / 100_000_000
       ) {
+        log(`Found taker transaction ${tx.txid} for taker ${offer.taker}`);
+        redis.setData({ key: cacheKey, data: tx });
         return tx;
       }
     }

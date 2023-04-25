@@ -19,6 +19,7 @@
     "ipfs",
     "locktime",
     "orderbooks",
+    "ordit",
     "p2wpkh",
     "psbt",
     "sado",
