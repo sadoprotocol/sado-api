@@ -1,6 +1,7 @@
 import debug from "debug";
 import moment from "moment";
 
+import { Network } from "../libraries/network";
 import { hasSignature, parseLocation } from "../libraries/transaction";
 import { infura, Offer, Order } from "../services/infura";
 import { lookup, Transaction, Vout } from "../services/lookup";
@@ -23,6 +24,8 @@ export class Offers {
   readonly #pending: PendingOfferItem[] = [];
   readonly #rejected: RejectedOfferItem[] = [];
   readonly #completed: CompletedOfferItem[] = [];
+
+  constructor(readonly network: Network) {}
 
   /*
    |--------------------------------------------------------------------------------
@@ -63,7 +66,7 @@ export class Offers {
 
     offer.order = order;
 
-    const owner = await getOwner(order.location);
+    const owner = await getOwner(order.location, this.network);
     if (owner === undefined) {
       return this.#reject(cid, offer, new InvalidOwnerLocationException(order.location));
     }
@@ -80,7 +83,7 @@ export class Offers {
 
     // ### Validate Offer
 
-    const tx = await lookup.transaction(txid);
+    const tx = await lookup.transaction(txid, this.network);
     if (tx === undefined) {
       return this.#reject(cid, offer, new TransactionNotFoundException(txid));
     }
@@ -92,7 +95,7 @@ export class Offers {
 
     if (hasOrdinalsAndInscriptions(vout) === false) {
       if (order.type === "sell") {
-        const tx = await getTakerTransaction(txid, order, offer);
+        const tx = await getTakerTransaction(txid, order, offer, this.network);
         if (tx === undefined) {
           return this.#reject(cid, offer, new OrdinalsMovedException());
         }
@@ -154,13 +157,19 @@ function hasOrdinalsAndInscriptions(vout: Vout): boolean {
 /**
  * Get confirmed transaction from takers list of transactions.
  *
- * @param txid  - Order location transaction id.
- * @param order - Order which the offer is based on.
- * @param offer - Offer to get transaction for.
+ * @param txid    - Order location transaction id.
+ * @param order   - Order which the offer is based on.
+ * @param offer   - Offer to get transaction for.
+ * @param network - Network to lookup transaction on.
  *
  * @returns Transaction if found, undefined otherwise.
  */
-async function getTakerTransaction(txid: string, order: Order, offer: Offer): Promise<Transaction | undefined> {
+async function getTakerTransaction(
+  txid: string,
+  order: Order,
+  offer: Offer,
+  network: Network
+): Promise<Transaction | undefined> {
   log(`Looking up taker transaction for taker ${offer.taker}`);
 
   // ### Check Cache
@@ -174,7 +183,7 @@ async function getTakerTransaction(txid: string, order: Order, offer: Offer): Pr
 
   // ### Check Ordit
 
-  const txs = await lookup.transactions(offer.taker);
+  const txs = await lookup.transactions(offer.taker, network);
   for (const tx of txs) {
     for (const vin of tx.vin) {
       const value = order.cardinals ?? order.satoshis ?? 0;
@@ -192,9 +201,9 @@ async function getTakerTransaction(txid: string, order: Order, offer: Offer): Pr
   }
 }
 
-async function getOwner(location: string): Promise<string | undefined> {
+async function getOwner(location: string, network: Network): Promise<string | undefined> {
   const [txid, vout] = parseLocation(location);
-  const tx = await lookup.transaction(txid);
+  const tx = await lookup.transaction(txid, network);
   if (tx === undefined) {
     return undefined;
   }

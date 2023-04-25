@@ -2,8 +2,7 @@ import { getEnvironmentVariable } from "./libraries/env";
 
 export const config = {
   port: normalizePort(getEnvironmentVariable("PORT")),
-  network: getEnvironmentVariable("NETWORK"),
-  lookupEndpoint: getEnvironmentVariable("LOOKUP_ENDPOINT"),
+  lookupEndpoint: "https://regtest.ordit.io/utxo",
   infuraGateway: getEnvironmentVariable("INFURA_GATEWAY"),
   redisUrl: getEnvironmentVariable("REDIS_URL"),
 };

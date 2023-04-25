@@ -1,6 +1,7 @@
 import debug from "debug";
 import moment from "moment";
 
+import { Network } from "../libraries/network";
 import { parseLocation } from "../libraries/transaction";
 import { infura, Order } from "../services/infura";
 import { lookup, Vout } from "../services/lookup";
@@ -19,6 +20,8 @@ export class Orders {
   readonly #pending: OrderItem[] = [];
   readonly #rejected: RejectedOrderItem[] = [];
   readonly #completed: OrderItem[] = [];
+
+  constructor(readonly network: Network) {}
 
   /*
    |--------------------------------------------------------------------------------
@@ -52,7 +55,7 @@ export class Orders {
       return this.#reject(cid, order.data, new InfuraException(order.error, { cid }));
     }
 
-    const owner = await getOwner(order.location);
+    const owner = await getOwner(order.location, this.network);
     if (owner === undefined) {
       return this.#reject(cid, order, new InvalidOwnerLocationException(order.location));
     }
@@ -65,7 +68,7 @@ export class Orders {
 
     const [txid, voutN] = parseLocation(order.location);
 
-    const tx = await lookup.transaction(txid);
+    const tx = await lookup.transaction(txid, this.network);
     if (tx === undefined) {
       return this.#reject(cid, order, new OrdinalNotFoundException(txid, voutN));
     }
@@ -127,9 +130,9 @@ function hasOrdinalsAndInscriptions(vout: Vout): boolean {
   return vout.ordinals.length > 0 && vout.inscriptions.length > 0;
 }
 
-async function getOwner(location: string): Promise<string | undefined> {
+async function getOwner(location: string, network: Network): Promise<string | undefined> {
   const [txid, vout] = parseLocation(location);
-  const tx = await lookup.transaction(txid);
+  const tx = await lookup.transaction(txid, network);
   if (tx === undefined) {
     return undefined;
   }

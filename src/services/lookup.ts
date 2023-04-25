@@ -1,6 +1,7 @@
 import fetch, { RequestInit } from "node-fetch";
 
 import { config } from "../config";
+import { Network } from "../libraries/network";
 import { redis } from "./redis";
 
 export const lookup = {
@@ -16,32 +17,33 @@ export const lookup = {
  |--------------------------------------------------------------------------------
  */
 
-async function transactions(address: string): Promise<Transaction[]> {
-  const txs = await get("/transactions", { address });
+async function transactions(address: string, network: Network): Promise<Transaction[]> {
+  const txs = await get("/transactions", { address }, network);
   if (txs === undefined) {
     return [];
   }
   return txs;
 }
 
-async function transaction(txid: string): Promise<Transaction | undefined> {
-  const cachedTx = await redis.getData<Transaction>({ key: txid });
+async function transaction(txid: string, network: Network): Promise<Transaction | undefined> {
+  const cacheKey = `${network}/${txid}`;
+  const cachedTx = await redis.getData<Transaction>({ key: cacheKey });
   if (cachedTx) {
     return cachedTx;
   }
-  const tx = await get("/transaction", { txid });
+  const tx = await get("/transaction", { txid }, network);
   if (tx) {
-    void redis.setData({ key: txid, data: tx });
+    void redis.setData({ key: cacheKey, data: tx });
   }
   return tx;
 }
 
-async function balance(address: string): Promise<Balance | undefined> {
-  return get("/balance", { address });
+async function balance(address: string, network: Network): Promise<Balance | undefined> {
+  return get("/balance", { address }, network);
 }
 
-async function unspents(address: string): Promise<Unspent[]> {
-  const unspents = await get("/unspents", { address });
+async function unspents(address: string, network: Network): Promise<Unspent[]> {
+  const unspents = await get("/unspents", { address }, network);
   if (unspents === undefined) {
     return [];
   }
@@ -54,12 +56,12 @@ async function unspents(address: string): Promise<Unspent[]> {
  |--------------------------------------------------------------------------------
  */
 
-async function get(path: string, data: unknown): Promise<any> {
+async function get(path: string, data: unknown, network: Network): Promise<any> {
   if (path.indexOf("/") !== 0) {
     path = "/" + path;
   }
 
-  const url = config.lookupEndpoint + path;
+  const url = config.lookupEndpoint.replace("regtest", network) + path;
   const requestObject: RequestInit = {
     method: "GET",
     headers: {
