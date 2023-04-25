@@ -76,6 +76,7 @@ export class Orders {
     }
 
     if (hasOrdinalsAndInscriptions(vout) === false) {
+      // [TODO] https://github.com/cakespecial/nodejs-sado/issues/9
       return this.#complete(cid, order);
     }
 
