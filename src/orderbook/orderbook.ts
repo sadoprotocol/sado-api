@@ -1,28 +1,38 @@
 import debug from "debug";
 
+import { Network } from "../libraries/network";
 import { lookup, Transaction } from "../services/lookup";
 import { Offers } from "./offers";
 import { Orders } from "./orders";
 
 const log = debug("sado-orderbook");
 
-type Options = {};
+type Options = {
+  network: Network;
+};
 
 export class OrderBook {
-  readonly orders = new Orders();
-  readonly offers = new Offers();
+  readonly orders: Orders;
+  readonly offers: Offers;
 
-  constructor(readonly address: string, readonly options: Options = {}) {}
+  constructor(readonly address: string, readonly options: Options) {
+    this.orders = new Orders(options.network);
+    this.offers = new Offers(options.network);
+  }
+
+  get network() {
+    return this.options.network;
+  }
 
   async resolve(): Promise<this> {
-    log(`Resolving Orderbook`);
+    log(`${this.network}: Resolving Orderbook`);
 
-    const txs = await lookup.transactions(this.address);
+    const txs = await lookup.transactions(this.address, this.network);
     if (txs.length === 0) {
       return this;
     }
 
-    log(`Found ${txs.length} transactions`);
+    log(`${this.network}: Found ${txs.length} transactions`);
 
     await this.#process(txs);
 

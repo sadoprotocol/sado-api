@@ -1,7 +1,7 @@
 import express from "express";
 import createError from "http-errors";
 
-import * as sado from "./services/sado";
+import { sado } from "./services/sado";
 
 export const router = express.Router();
 
@@ -10,7 +10,7 @@ export const router = express.Router();
 router.all("/get", function (req, res, next) {
   if (req.body && req.body.address) {
     sado
-      .get(req.body.address)
+      .get(req.body.address, req.body.network ?? "regtest")
       .then((balance) => {
         res.json({
           success: true,
