@@ -31,8 +31,6 @@ $ npm install
 
 ## Running
 
-<br />
-
 ### Docker Compose
 
 To enable API caching spin up `redis` via `docker-compose`.
@@ -53,7 +51,7 @@ To cut a new release from main, use the github release functionality. This will 
 
 ### Issues
 
-If there are issues with the deployment `ssh` into the EC2 instance @ 52.63.33.11 to troubleshoot. Please not the following EC2 setup we are using for where to begin.
+If there are issues with the deployment `ssh` into the EC2 instance ubuntu@`52.63.33.11` to troubleshoot. Please note the following EC2 setup we are using for where to begin. You will need to have your public ssh key added to the instance to be able to access it.
 
 #### NGINX
 
