@@ -96,10 +96,11 @@ export class Offers {
         if (tx === undefined) {
           return this.#reject(cid, offer, new OrdinalsMovedException());
         }
-      } else if (order.type === "buy") {
+        return this.#complete(cid, offer, tx.txid);
+      }
+      if (order.type === "buy") {
         return this.#reject(cid, offer, new OrdinalsMovedException());
       }
-      return this.#complete(cid, offer, tx);
     }
 
     // ### Add Offer
@@ -128,7 +129,7 @@ export class Offers {
     });
   }
 
-  #complete(cid: string, offer: Offer, proof: Transaction): void {
+  #complete(cid: string, offer: Offer, proof: string): void {
     this.#completed.push({
       ...offer,
       ...this.#getTypeMap(offer),
@@ -204,6 +205,6 @@ type PendingOfferItem = Offer & OfferMeta & ItemContent;
 
 type RejectedOfferItem = { reason: ItemException } & Offer & OfferMeta;
 
-type CompletedOfferItem = Offer & OfferMeta & { proof: Transaction };
+type CompletedOfferItem = Offer & OfferMeta & { proof: string };
 
 type OfferMeta = { order?: Order; buy: boolean; sell: boolean; ago: string; cid: string };
