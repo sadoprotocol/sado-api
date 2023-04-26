@@ -47,21 +47,21 @@ export class Orders {
    |--------------------------------------------------------------------------------
    */
 
-  async push(cid: string): Promise<void> {
+  async push(cid: string, value: number): Promise<void> {
     log(`Resolving order ${cid}`);
 
     const order = await infura.getOrder(cid);
     if ("error" in order) {
-      return this.#reject(cid, order.data, new InfuraException(order.error, { cid }));
+      return this.#reject(cid, order.data, new InfuraException(order.error, { cid }), value);
     }
 
     const owner = await getOwner(order.location, this.network);
     if (owner === undefined) {
-      return this.#reject(cid, order, new InvalidOwnerLocationException(order.location));
+      return this.#reject(cid, order, new InvalidOwnerLocationException(order.location), value);
     }
 
     if ((order.type === "sell" && owner === order.maker) === false) {
-      return this.#reject(cid, order, new InvalidOrderMakerException(order.type, owner, order.maker));
+      return this.#reject(cid, order, new InvalidOrderMakerException(order.type, owner, order.maker), value);
     }
 
     // ### Validate Ordinal
@@ -70,51 +70,54 @@ export class Orders {
 
     const tx = await lookup.transaction(txid, this.network);
     if (tx === undefined) {
-      return this.#reject(cid, order, new OrdinalNotFoundException(txid, voutN));
+      return this.#reject(cid, order, new OrdinalNotFoundException(txid, voutN), value);
     }
 
     const vout = tx.vout.find((item) => item.n === voutN);
     if (vout === undefined) {
-      return this.#reject(cid, order, new VoutOutOfRangeException(voutN));
+      return this.#reject(cid, order, new VoutOutOfRangeException(voutN), value);
     }
 
     if (hasOrdinalsAndInscriptions(vout) === false) {
       // [TODO] https://github.com/cakespecial/nodejs-sado/issues/9
-      return this.#complete(cid, order);
+      return this.#complete(cid, order, value);
     }
 
     // ### Add Order
 
-    this.#add(cid, order, vout);
+    this.#add(cid, order, vout, value);
   }
 
-  #add(cid: string, order: Order, vout: Vout): void {
+  #add(cid: string, order: Order, vout: Vout, value: number): void {
     this.#pending.push({
       ...order,
       ...this.#getTypeMap(order),
       ago: moment(order.ts).fromNow(),
       cid,
+      value,
       ordinals: vout.ordinals,
       inscriptions: vout.inscriptions,
     });
   }
 
-  #reject(cid: string, order: Order, reason: ItemException): void {
+  #reject(cid: string, order: Order, reason: ItemException, value: number): void {
     this.#rejected.push({
       reason,
       ...order,
       ...this.#getTypeMap(order),
       ago: moment(order.ts).fromNow(),
       cid,
+      value,
     });
   }
 
-  #complete(cid: string, order: Order): void {
+  #complete(cid: string, order: Order, value: number): void {
     this.#completed.push({
       ...order,
       ...this.#getTypeMap(order),
       ago: moment(order.ts).fromNow(),
       cid,
+      value,
     });
   }
 
@@ -139,6 +142,13 @@ async function getOwner(location: string, network: Network): Promise<string | un
   return tx.vout[vout]?.scriptPubKey?.address;
 }
 
-type OrderItem = Order & { order?: Order; buy: boolean; sell: boolean; ago: string; cid: string } & ItemContent;
+type OrderItem = Order & {
+  order?: Order;
+  buy: boolean;
+  sell: boolean;
+  ago: string;
+  cid: string;
+  value: number;
+} & ItemContent;
 
 type RejectedOrderItem = { reason: ItemException } & OrderItem;

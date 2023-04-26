@@ -45,9 +45,9 @@ export class OrderBook {
         const sado = parseSado(vout.scriptPubKey.utf8);
         if (sado !== undefined) {
           if (sado.type === "order") {
-            await this.orders.push(sado.cid);
+            await this.orders.push(sado.cid, getTxValue(this.address, tx));
           } else if (sado.type === "offer") {
-            await this.offers.push(sado.cid);
+            await this.offers.push(sado.cid, getTxValue(this.address, tx));
           }
         }
       }
@@ -70,6 +70,20 @@ export class OrderBook {
       },
     };
   }
+}
+
+/*
+ |--------------------------------------------------------------------------------
+ | Utilities
+ |--------------------------------------------------------------------------------
+ */
+
+function getTxValue(address: string, tx: Transaction): number {
+  const vout = tx.vout.find((v) => v.scriptPubKey.address === address);
+  if (vout === undefined) {
+    throw new Error(`Transaction ${tx.txid} does not contain a vout with address ${address}`);
+  }
+  return Math.floor(vout.value * 100_000_000);
 }
 
 /*
