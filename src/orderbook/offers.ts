@@ -51,32 +51,32 @@ export class Offers {
    |--------------------------------------------------------------------------------
    */
 
-  async push(cid: string): Promise<void> {
+  async push(cid: string, value: number): Promise<void> {
     log(`Resolving offer ${cid}`);
 
     const offer = await infura.getOffer(cid);
     if ("error" in offer) {
-      return this.#reject(cid, offer.data, new InfuraException(offer.error, { cid }));
+      return this.#reject(cid, offer.data, new InfuraException(offer.error, { cid }), value);
     }
 
     const order = await infura.getOrder(offer.origin);
     if ("error" in order) {
-      return this.#reject(cid, offer, new OriginNotFoundException(offer.origin));
+      return this.#reject(cid, offer, new OriginNotFoundException(offer.origin), value);
     }
 
     offer.order = order;
 
     const owner = await getOwner(order.location, this.network);
     if (owner === undefined) {
-      return this.#reject(cid, offer, new InvalidOwnerLocationException(order.location));
+      return this.#reject(cid, offer, new InvalidOwnerLocationException(order.location), value);
     }
 
     if (hasSignature(offer.offer) === false) {
-      return this.#reject(cid, offer, new InvalidSignatureException());
+      return this.#reject(cid, offer, new InvalidSignatureException(), value);
     }
 
     if ((owner === order.maker || owner === offer.taker) === false) {
-      return this.#reject(cid, offer, new InvalidOfferOwnerException(owner, order.maker, offer.taker));
+      return this.#reject(cid, offer, new InvalidOfferOwnerException(owner, order.maker, offer.taker), value);
     }
 
     const [txid, voutN] = parseLocation(order!.location);
@@ -85,59 +85,62 @@ export class Offers {
 
     const tx = await lookup.transaction(txid, this.network);
     if (tx === undefined) {
-      return this.#reject(cid, offer, new TransactionNotFoundException(txid));
+      return this.#reject(cid, offer, new TransactionNotFoundException(txid), value);
     }
 
     const vout = tx.vout.find((item) => item.n === voutN);
     if (vout === undefined) {
-      return this.#reject(cid, offer, new VoutOutOfRangeException(voutN));
+      return this.#reject(cid, offer, new VoutOutOfRangeException(voutN), value);
     }
 
     if (hasOrdinalsAndInscriptions(vout) === false) {
       if (order.type === "sell") {
         const tx = await getTakerTransaction(txid, order, offer, this.network);
         if (tx === undefined) {
-          return this.#reject(cid, offer, new OrdinalsMovedException());
+          return this.#reject(cid, offer, new OrdinalsMovedException(), value);
         }
-        return this.#complete(cid, offer, tx.txid);
+        return this.#complete(cid, offer, tx.txid, value);
       }
       if (order.type === "buy") {
-        return this.#reject(cid, offer, new OrdinalsMovedException());
+        return this.#reject(cid, offer, new OrdinalsMovedException(), value);
       }
     }
 
     // ### Add Offer
 
-    this.#add(cid, offer, vout);
+    this.#add(cid, offer, vout, value);
   }
 
-  #add(cid: string, offer: Offer, vout: Vout): void {
+  #add(cid: string, offer: Offer, vout: Vout, value: number): void {
     this.#pending.push({
       ...offer,
       ...this.#getTypeMap(offer),
       ago: moment(offer.ts).fromNow(),
       cid,
+      value,
       ordinals: vout.ordinals,
       inscriptions: vout.inscriptions,
     });
   }
 
-  #reject(cid: string, offer: Offer, reason: ItemException): void {
+  #reject(cid: string, offer: Offer, reason: ItemException, value: number): void {
     this.#rejected.push({
       reason,
       ...offer,
       ...this.#getTypeMap(offer),
       ago: moment(offer.ts).fromNow(),
       cid,
+      value,
     });
   }
 
-  #complete(cid: string, offer: Offer, proof: string): void {
+  #complete(cid: string, offer: Offer, proof: string, value: number): void {
     this.#completed.push({
       ...offer,
       ...this.#getTypeMap(offer),
       ago: moment(offer.ts).fromNow(),
       cid,
+      value,
       proof,
     });
   }
@@ -216,4 +219,4 @@ type RejectedOfferItem = { reason: ItemException } & Offer & OfferMeta;
 
 type CompletedOfferItem = Offer & OfferMeta & { proof: string };
 
-type OfferMeta = { order?: Order; buy: boolean; sell: boolean; ago: string; cid: string };
+type OfferMeta = { order?: Order; buy: boolean; sell: boolean; ago: string; cid: string; value: number };
