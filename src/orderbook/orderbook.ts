@@ -56,10 +56,18 @@ export class OrderBook {
 
   toJSON() {
     return {
-      orders: this.orders.pending,
-      offers: this.offers.pending,
-      rejected: [...this.orders.rejected, ...this.offers.rejected],
-      completed: [...this.orders.completed, ...this.offers.completed],
+      pending: {
+        orders: this.orders.pending,
+        offers: this.offers.pending,
+      },
+      rejected: {
+        orders: this.orders.rejected,
+        offers: this.offers.rejected,
+      },
+      completed: {
+        orders: this.orders.completed,
+        offers: this.offers.completed,
+      },
     };
   }
 }
