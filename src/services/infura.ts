@@ -160,7 +160,7 @@ export type Order<Meta extends Record<string, unknown> = Record<string, unknown>
    *
    * @deprecated this value is slated to be removed in favor of `cardinals`.
    */
-  satoshis?: number;
+  satoshis?: string;
 
   /**
    * Amount of satoshis required/offered to execute the fulfill the order.
@@ -168,7 +168,7 @@ export type Order<Meta extends Record<string, unknown> = Record<string, unknown>
    * SELL - Integer number of lowest denomination required to purchase the ordinal.
    * BUY  - Integer number offered to purchase the ordinal.
    */
-  cardinals?: number;
+  cardinals?: string;
 
   /**
    * Satoshi is used when a seller or buyer wants to trade inscriptions.

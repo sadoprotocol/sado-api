@@ -1,13 +1,16 @@
 import debug from "debug";
 import moment from "moment";
 
+import { BTC_TO_SAT } from "../libraries/bitcoin";
 import { Network } from "../libraries/network";
-import { hasSignature, parseLocation } from "../libraries/transaction";
+import { getTypeMap } from "../libraries/response";
+import { hasOrdinalsAndInscriptions, hasSignature, parseLocation } from "../libraries/transaction";
 import { infura, Offer, Order } from "../services/infura";
 import { lookup, Transaction, Vout } from "../services/lookup";
 import { redis } from "../services/redis";
 import {
   InfuraException,
+  InsufficientFundsException,
   InvalidOfferOwnerException,
   InvalidOwnerLocationException,
   InvalidSignatureException,
@@ -16,6 +19,7 @@ import {
   TransactionNotFoundException,
   VoutOutOfRangeException,
 } from "./exceptions";
+import { getAskingPrice, getOrderOwner } from "./orders";
 import { ItemContent, ItemException } from "./types";
 
 const log = debug("sado-offers");
@@ -51,32 +55,36 @@ export class Offers {
    |--------------------------------------------------------------------------------
    */
 
-  async push(cid: string, value: number): Promise<void> {
+  async push(cid: string, value: number | undefined): Promise<void> {
     log(`Resolving offer ${cid}`);
 
     const offer = await infura.getOffer(cid);
     if ("error" in offer) {
-      return this.#reject(cid, offer.data, new InfuraException(offer.error, { cid }), value);
+      return this.#reject(cid, offer.data, new InfuraException(offer.error, { cid }));
+    }
+
+    if (value === undefined) {
+      return this.#reject(cid, offer, new InsufficientFundsException());
     }
 
     const order = await infura.getOrder(offer.origin);
     if ("error" in order) {
-      return this.#reject(cid, offer, new OriginNotFoundException(offer.origin), value);
+      return this.#reject(cid, offer, new OriginNotFoundException(offer.origin));
     }
 
     offer.order = order;
 
-    const owner = await getOwner(order.location, this.network);
+    const owner = await getOrderOwner(order, this.network);
     if (owner === undefined) {
-      return this.#reject(cid, offer, new InvalidOwnerLocationException(order.location), value);
+      return this.#reject(cid, offer, new InvalidOwnerLocationException(order.location));
     }
 
     if (hasSignature(offer.offer) === false) {
-      return this.#reject(cid, offer, new InvalidSignatureException(), value);
+      return this.#reject(cid, offer, new InvalidSignatureException());
     }
 
     if ((owner === order.maker || owner === offer.taker) === false) {
-      return this.#reject(cid, offer, new InvalidOfferOwnerException(owner, order.maker, offer.taker), value);
+      return this.#reject(cid, offer, new InvalidOfferOwnerException(owner, order.maker, offer.taker));
     }
 
     const [txid, voutN] = parseLocation(order!.location);
@@ -85,24 +93,24 @@ export class Offers {
 
     const tx = await lookup.transaction(txid, this.network);
     if (tx === undefined) {
-      return this.#reject(cid, offer, new TransactionNotFoundException(txid), value);
+      return this.#reject(cid, offer, new TransactionNotFoundException(txid));
     }
 
     const vout = tx.vout.find((item) => item.n === voutN);
     if (vout === undefined) {
-      return this.#reject(cid, offer, new VoutOutOfRangeException(voutN), value);
+      return this.#reject(cid, offer, new VoutOutOfRangeException(voutN));
     }
 
     if (hasOrdinalsAndInscriptions(vout) === false) {
       if (order.type === "sell") {
         const tx = await getTakerTransaction(txid, order, offer, this.network);
         if (tx === undefined) {
-          return this.#reject(cid, offer, new OrdinalsMovedException(), value);
+          return this.#reject(cid, offer, new OrdinalsMovedException());
         }
         return this.#complete(cid, offer, tx.txid, value);
       }
       if (order.type === "buy") {
-        return this.#reject(cid, offer, new OrdinalsMovedException(), value);
+        return this.#reject(cid, offer, new OrdinalsMovedException());
       }
     }
 
@@ -114,7 +122,7 @@ export class Offers {
   #add(cid: string, offer: Offer, vout: Vout, value: number): void {
     this.#pending.push({
       ...offer,
-      ...this.#getTypeMap(offer),
+      ...getTypeMap(offer),
       ago: moment(offer.ts).fromNow(),
       cid,
       value,
@@ -123,39 +131,33 @@ export class Offers {
     });
   }
 
-  #reject(cid: string, offer: Offer, reason: ItemException, value: number): void {
+  #reject(cid: string, offer: Offer, reason: ItemException): void {
     this.#rejected.push({
       reason,
       ...offer,
-      ...this.#getTypeMap(offer),
+      ...getTypeMap(offer),
       ago: moment(offer.ts).fromNow(),
       cid,
-      value,
     });
   }
 
   #complete(cid: string, offer: Offer, proof: string, value: number): void {
     this.#completed.push({
       ...offer,
-      ...this.#getTypeMap(offer),
+      ...getTypeMap(offer),
       ago: moment(offer.ts).fromNow(),
       cid,
       value,
       proof,
     });
   }
-
-  #getTypeMap(offer: any) {
-    if (offer.type === "buy") {
-      return { buy: true, sell: false };
-    }
-    return { buy: false, sell: true };
-  }
 }
 
-function hasOrdinalsAndInscriptions(vout: Vout): boolean {
-  return vout.ordinals.length > 0 && vout.inscriptions.length > 0;
-}
+/*
+ |--------------------------------------------------------------------------------
+ | Utilities
+ |--------------------------------------------------------------------------------
+ */
 
 /**
  * Get confirmed transaction from takers list of transactions.
@@ -189,12 +191,12 @@ async function getTakerTransaction(
   const txs = await lookup.transactions(offer.taker, network);
   for (const tx of txs) {
     for (const vin of tx.vin) {
-      const value = order.cardinals ?? order.satoshis ?? 0;
+      const value = getAskingPrice(order);
       if (
         vin.txid === txid &&
         tx.vout[0]?.scriptPubKey.address === offer.taker &&
         tx.vout[1]?.scriptPubKey.address === order.maker &&
-        tx.vout[1]?.value === value / 100_000_000
+        tx.vout[1]?.value === value / BTC_TO_SAT
       ) {
         log(`Found taker transaction ${tx.txid} for taker ${offer.taker}`);
         redis.setData({ key: cacheKey, data: tx });
@@ -204,18 +206,15 @@ async function getTakerTransaction(
   }
 }
 
-async function getOwner(location: string, network: Network): Promise<string | undefined> {
-  const [txid, vout] = parseLocation(location);
-  const tx = await lookup.transaction(txid, network);
-  if (tx === undefined) {
-    return undefined;
-  }
-  return tx.vout[vout]?.scriptPubKey?.address;
-}
+/*
+ |--------------------------------------------------------------------------------
+ | Types
+ |--------------------------------------------------------------------------------
+ */
 
 type PendingOfferItem = Offer & OfferMeta & ItemContent;
 
-type RejectedOfferItem = { reason: ItemException } & Offer & OfferMeta;
+type RejectedOfferItem = { reason: ItemException } & Offer & Omit<OfferMeta, "value">;
 
 type CompletedOfferItem = Offer & OfferMeta & { proof: string };
 
