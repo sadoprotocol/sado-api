@@ -2,6 +2,12 @@ class SadoException {
   constructor(readonly code: string, readonly message: string, readonly data: any = {}) {}
 }
 
+export class InsufficientFundsException extends SadoException {
+  constructor() {
+    super("INSUFFICIENT_FUNDS", `Insufficient funds to list ordinal`);
+  }
+}
+
 export class InfuraException extends SadoException {
   constructor(message: string, data: any = {}) {
     super("INFURA_REQUEST_FAILED", message, data);

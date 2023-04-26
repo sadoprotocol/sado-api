@@ -1,5 +1,8 @@
 import * as btc from "bitcoinjs-lib";
 
+import { Transaction, Vout } from "../services/lookup";
+import { BTC_TO_SAT } from "./bitcoin";
+
 /**
  * Check if the provided raw transaction hex has a signature.
  *
@@ -23,6 +26,33 @@ export function hasSignature(rawTx: string): boolean {
     }
   }
   return false;
+}
+
+/**
+ * Check if provided vout has ordinals and inscriptions.
+ *
+ * @param vout - Vout to check.
+ *
+ * @returns `true` if vout has ordinals and inscriptions, `false` otherwise.
+ */
+export function hasOrdinalsAndInscriptions(vout: Vout): boolean {
+  return vout.ordinals.length > 0 && vout.inscriptions.length > 0;
+}
+
+/**
+ * Get value of a vout in satoshis that is associated with the provided address.
+ *
+ * @param tx      - Transaction to extract value from.
+ * @param address - Address to get value for.
+ *
+ * @returns Value of the vout in satoshis or `undefined` if no value is found.
+ */
+export function getAddressVoutValue(tx: Transaction, address: string): number | undefined {
+  const vout = tx.vout.find((v) => v.scriptPubKey.address === address);
+  if (vout === undefined) {
+    return undefined;
+  }
+  return Math.floor(vout.value * BTC_TO_SAT);
 }
 
 /**
