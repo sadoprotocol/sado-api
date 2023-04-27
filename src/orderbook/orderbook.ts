@@ -59,6 +59,7 @@ export class OrderBook {
     return {
       analytics: {
         orders: this.orders.analytics,
+        offers: this.offers.analytics,
       },
       pending: {
         orders: this.orders.pending,
