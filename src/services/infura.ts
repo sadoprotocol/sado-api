@@ -252,7 +252,7 @@ export type Offer = {
  *        orderbook development.
  */
 type OfferPartial = {
-  order?: Order;
+  order: Order;
 };
 
 export type OrderType = "sell" | "buy";

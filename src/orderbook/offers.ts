@@ -8,6 +8,7 @@ import { hasOrdinalsAndInscriptions, hasSignature, parseLocation } from "../libr
 import { infura, Offer, Order } from "../services/infura";
 import { lookup, Transaction, Vout } from "../services/lookup";
 import { redis } from "../services/redis";
+import { OffersAnalytics } from "./analytics/offers";
 import {
   InfuraException,
   InsufficientFundsException,
@@ -19,8 +20,8 @@ import {
   TransactionNotFoundException,
   VoutOutOfRangeException,
 } from "./exceptions";
-import { getAskingPrice, getOrderOwner } from "./orders";
 import { ItemContent, ItemException } from "./types";
+import { getAskingPrice, getOrderOwner } from "./utilities";
 
 const log = debug("sado-offers");
 
@@ -28,6 +29,8 @@ export class Offers {
   readonly #pending: PendingOfferItem[] = [];
   readonly #rejected: RejectedOfferItem[] = [];
   readonly #completed: CompletedOfferItem[] = [];
+
+  readonly #analytics = new OffersAnalytics();
 
   constructor(readonly network: Network) {}
 
@@ -47,6 +50,10 @@ export class Offers {
 
   get completed() {
     return this.#completed;
+  }
+
+  get analytics() {
+    return this.#analytics.toJSON();
   }
 
   /*
@@ -120,6 +127,7 @@ export class Offers {
   }
 
   #add(cid: string, offer: Offer, vout: Vout, value: number): void {
+    this.#analytics.addPending(offer);
     this.#pending.push({
       ...offer,
       ...getTypeMap(offer),
@@ -142,6 +150,7 @@ export class Offers {
   }
 
   #complete(cid: string, offer: Offer, proof: string, value: number): void {
+    this.#analytics.addCompleted(offer);
     this.#completed.push({
       ...offer,
       ...getTypeMap(offer),

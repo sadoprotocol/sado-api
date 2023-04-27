@@ -1,8 +1,8 @@
-import { Order } from "../../services/infura";
+import { Offer } from "../../services/infura";
 import { getAskingPrice } from "../utilities";
 import { Collections } from "./collections";
 
-export class OrdersAnalytics {
+export class OffersAnalytics {
   readonly #collections = new Collections();
 
   readonly #pending = {
@@ -18,16 +18,16 @@ export class OrdersAnalytics {
   #count = 0;
   #total = 0;
 
-  addPending(order: Order) {
-    const price = getAskingPrice(order);
-    this.#collections.addCollection(order, price);
+  addPending(offer: Offer) {
+    const price = getAskingPrice(offer.order);
+    this.#collections.addCollection(offer.order, price);
     this.addTotal(price);
     this.#pending.count += 1;
     this.#pending.total += price;
   }
 
-  addCompleted(order: Order) {
-    const price = getAskingPrice(order);
+  addCompleted(offer: Offer) {
+    const price = getAskingPrice(offer.order);
     this.addTotal(price);
     this.#completed.count += 1;
     this.#completed.total += price;
