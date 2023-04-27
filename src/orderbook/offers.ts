@@ -21,7 +21,7 @@ import {
   VoutOutOfRangeException,
 } from "./exceptions";
 import { ItemContent, ItemException } from "./types";
-import { getAskingPrice, getOrderOwner } from "./utilities";
+import { getAskingPrice, getOrderOwner, getOrderPrice } from "./utilities";
 
 const log = debug("sado-offers");
 
@@ -92,6 +92,7 @@ export class Offers {
     }
 
     offer.order = order;
+    offer.order.price = await getOrderPrice(order);
 
     const owner = await getOrderOwner(order, this.network);
     if (owner === undefined) {
@@ -137,6 +138,16 @@ export class Offers {
 
     this.#add(cid, offer, vout, value);
   }
+
+  async setPriceList() {
+    await this.#analytics.setPriceList();
+  }
+
+  /*
+   |--------------------------------------------------------------------------------
+   | Assignments
+   |--------------------------------------------------------------------------------
+   */
 
   #add(cid: string, offer: Offer, vout: Vout, value: number): void {
     this.#analytics.addPending(offer);

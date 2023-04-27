@@ -16,7 +16,7 @@ export class OrderBook {
   readonly orders: Orders;
   readonly offers: Offers;
 
-  readonly #ts: number[] = [];
+  readonly ts: number[] = [];
 
   constructor(readonly address: string, readonly options: Options) {
     this.orders = new Orders(options.network);
@@ -37,12 +37,13 @@ export class OrderBook {
       return this;
     }
 
-    this.#ts.push(performance.now() - t);
+    this.ts.push(performance.now() - t);
 
     log(`${this.network}: Found ${txs.length} transactions`);
 
     await this.#process(txs);
     await this.#link();
+    await this.#price();
 
     return this;
   }
@@ -69,7 +70,7 @@ export class OrderBook {
       }
     }
     await Promise.all(promises);
-    this.#ts.push(performance.now() - t);
+    this.ts.push(performance.now() - t);
   }
 
   /**
@@ -79,12 +80,18 @@ export class OrderBook {
   async #link() {
     const t = performance.now();
     this.orders.linkOffers(this.offers);
-    this.#ts.push(performance.now() - t);
+    this.ts.push(performance.now() - t);
+  }
+
+  async #price() {
+    const t = performance.now();
+    await Promise.all([this.orders.setPriceList(), this.offers.setPriceList()]);
+    this.ts.push(performance.now() - t);
   }
 
   toJSON() {
     return {
-      ts: this.#ts.map((t) => roundToNearestNonZeroDecimal(t / 1_000)),
+      ts: this.ts.map((t) => t / 1_000),
       analytics: {
         orders: this.orders.analytics,
         offers: this.offers.analytics,
@@ -128,25 +135,6 @@ function parseSado(utf8?: string): SadoOrder | undefined {
       return { type, cid };
     }
   }
-}
-
-function roundToNearestNonZeroDecimal(num: number): number {
-  let decimalPlace = 0;
-  let value = num;
-
-  if (value > 0) {
-    while (value < 1) {
-      value *= 10;
-      decimalPlace++;
-    }
-  } else if (value < 0) {
-    while (value > -1) {
-      value *= 10;
-      decimalPlace++;
-    }
-  }
-
-  return parseFloat(num.toFixed(decimalPlace));
 }
 
 /*
