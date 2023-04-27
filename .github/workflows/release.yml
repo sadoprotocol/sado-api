@@ -10,17 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
 
-      - uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
-        id: version
-        with:
-          script: |
-            const semver = context.ref.replace('refs/tags/v', '')
-            if (semver.match(/^[0-9]+\.[0-9]+\.[0-9]+$/)) {
-              return semver
-            }
-            throw new Error('not semver')
-          result-encoding: string
-
       - name: Deploy to EC2
         uses: easingthemes/ssh-deploy@3884c8554ff45c0fd37d3f12a76288d06ce7a2ff # v4.1.8
         env:
@@ -52,13 +41,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "Sado API Released: ${{ steps.version.outputs.result }}",
+              "text": "Sado API Released: ${{ github.event.release.name }}",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "${{ github.event.release.body }}"
+                    "text": "You can read more about this release [here](https://github.com/cakespecial/sado-api/releases/tag/${{ github.event.release.tag_name }})"
                   }
                 }
               ]
