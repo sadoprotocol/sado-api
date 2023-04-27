@@ -40,6 +40,18 @@ export class Offers {
    |--------------------------------------------------------------------------------
    */
 
+  get map() {
+    const map: OffersMap = {};
+    for (const item of this.all) {
+      map[item.order.location] = item;
+    }
+    return map;
+  }
+
+  get all() {
+    return [...this.#pending, ...this.#rejected, ...this.#completed];
+  }
+
   get pending() {
     return this.#pending;
   }
@@ -62,7 +74,7 @@ export class Offers {
    |--------------------------------------------------------------------------------
    */
 
-  async push(cid: string, value: number | undefined): Promise<void> {
+  async addOffer(cid: string, value: number | undefined): Promise<void> {
     log(`Resolving offer ${cid}`);
 
     const offer = await infura.getOffer(cid);
@@ -220,6 +232,10 @@ async function getTakerTransaction(
  | Types
  |--------------------------------------------------------------------------------
  */
+
+type OffersMap = {
+  [cid: string]: PendingOfferItem | RejectedOfferItem | CompletedOfferItem;
+};
 
 type PendingOfferItem = Offer & OfferMeta & ItemContent;
 

@@ -47,7 +47,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "You can read more about this release [here](https://github.com/cakespecial/sado-api/releases/tag/${{ github.event.release.tag_name }})"
+                    "text": "Sado API Released: ${{ github.event.release.name }}\nRelease Notes: https://github.com/cakespecial/sado-api/releases/tag/${{ github.event.release.tag_name }}"
                   }
                 }
               ]

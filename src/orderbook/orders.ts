@@ -15,6 +15,7 @@ import {
   OrdinalNotFoundException,
   VoutOutOfRangeException,
 } from "./exceptions";
+import type { Offers } from "./offers";
 import { ItemContent, ItemException } from "./types";
 import { getOrderOwner } from "./utilities";
 
@@ -35,6 +36,10 @@ export class Orders {
    |--------------------------------------------------------------------------------
    */
 
+  get all() {
+    return [...this.#pending, ...this.#rejected, ...this.#completed];
+  }
+
   get pending() {
     return this.#pending;
   }
@@ -53,11 +58,11 @@ export class Orders {
 
   /*
    |--------------------------------------------------------------------------------
-   | Handler
+   | Handlers
    |--------------------------------------------------------------------------------
    */
 
-  async push(cid: string, value: number | undefined): Promise<void> {
+  async addOrder(cid: string, value: number | undefined): Promise<void> {
     log(`Resolving order ${cid}`);
 
     const order = await infura.getOrder(cid);
@@ -105,6 +110,17 @@ export class Orders {
     this.#add(cid, order, vout, value);
   }
 
+  async linkOffers(offers: Offers) {
+    const map = offers.map;
+    for (const order of this.all) {
+      const offer = map[order.location];
+      if (offer !== undefined) {
+        order.offers.count += 1;
+        order.offers.cids.push(offer.cid);
+      }
+    }
+  }
+
   /*
    |--------------------------------------------------------------------------------
    | Assignments
@@ -119,6 +135,10 @@ export class Orders {
       ago: moment(order.ts).fromNow(),
       cid,
       value,
+      offers: {
+        count: 0,
+        cids: [],
+      },
       ordinals: vout.ordinals,
       inscriptions: vout.inscriptions,
     });
@@ -131,6 +151,10 @@ export class Orders {
       ...getTypeMap(order),
       ago: moment(order.ts).fromNow(),
       cid,
+      offers: {
+        count: 0,
+        cids: [],
+      },
     });
   }
 
@@ -142,6 +166,10 @@ export class Orders {
       ago: moment(order.ts).fromNow(),
       cid,
       value,
+      offers: {
+        count: 0,
+        cids: [],
+      },
     });
   }
 }
@@ -159,6 +187,10 @@ type OrderItem = Order & {
   ago: string;
   cid: string;
   value: number;
+  offers: {
+    count: number;
+    cids: string[];
+  };
 } & ItemContent;
 
 type RejectedOrderItem = { reason: ItemException } & Omit<OrderItem, "value">;

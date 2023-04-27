@@ -36,23 +36,38 @@ export class OrderBook {
     log(`${this.network}: Found ${txs.length} transactions`);
 
     await this.#process(txs);
+    await this.#link();
 
     return this;
   }
 
+  /**
+   * Loops through provided transactions and fills out the orders and offers
+   * connected to the orderbook.
+   *
+   * @param txs - Transactions to process.
+   */
   async #process(txs: Transaction[]): Promise<void> {
     for (const tx of txs) {
       for (const vout of tx.vout) {
         const sado = parseSado(vout.scriptPubKey.utf8);
         if (sado !== undefined) {
           if (sado.type === "order") {
-            await this.orders.push(sado.cid, getAddressVoutValue(tx, this.address));
+            await this.orders.addOrder(sado.cid, getAddressVoutValue(tx, this.address));
           } else if (sado.type === "offer") {
-            await this.offers.push(sado.cid, getAddressVoutValue(tx, this.address));
+            await this.offers.addOffer(sado.cid, getAddressVoutValue(tx, this.address));
           }
         }
       }
     }
+  }
+
+  /**
+   * Loops through the orders and offers and links related data together in
+   * a format improves referencing relations in clients.
+   */
+  async #link() {
+    this.orders.linkOffers(this.offers);
   }
 
   toJSON() {
