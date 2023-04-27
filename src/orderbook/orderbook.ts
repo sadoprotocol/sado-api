@@ -55,18 +55,20 @@ export class OrderBook {
    */
   async #process(txs: Transaction[]): Promise<void> {
     const t = performance.now();
+    const promises = [];
     for (const tx of txs) {
       for (const vout of tx.vout) {
         const sado = parseSado(vout.scriptPubKey.utf8);
         if (sado !== undefined) {
           if (sado.type === "order") {
-            await this.orders.addOrder(sado.cid, getAddressVoutValue(tx, this.address));
+            promises.push(this.orders.addOrder(sado.cid, getAddressVoutValue(tx, this.address)));
           } else if (sado.type === "offer") {
-            await this.offers.addOffer(sado.cid, getAddressVoutValue(tx, this.address));
+            promises.push(this.offers.addOffer(sado.cid, getAddressVoutValue(tx, this.address)));
           }
         }
       }
     }
+    await Promise.all(promises);
     this.#ts.push(performance.now() - t);
   }
 
