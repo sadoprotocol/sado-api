@@ -17,7 +17,7 @@ import {
 } from "./exceptions";
 import type { Offers } from "./offers";
 import { ItemContent, ItemException } from "./types";
-import { getOrderOwner } from "./utilities";
+import { getOrderOwner, getOrderPrice } from "./utilities";
 
 const log = debug("sado-orders");
 
@@ -97,6 +97,10 @@ export class Orders {
       return this.#reject(cid, order, new VoutOutOfRangeException(voutN));
     }
 
+    // ### Set Prices
+
+    order.price = await getOrderPrice(order);
+
     // ### Complete Order
     // Check if order is completed and add it to the complete list.
 
@@ -119,6 +123,10 @@ export class Orders {
         order.offers.cids.push(offer.cid);
       }
     }
+  }
+
+  async setPriceList() {
+    await this.#analytics.setPriceList();
   }
 
   /*

@@ -9,6 +9,7 @@ export const lookup = {
   transaction,
   balance,
   unspents,
+  inscriptions,
 };
 
 /*
@@ -48,6 +49,10 @@ async function unspents(address: string, network: Network): Promise<Unspent[]> {
     return [];
   }
   return unspents;
+}
+
+async function inscriptions(outpoint: string, network: Network): Promise<Inscription[]> {
+  return get("/inscriptions", { outpoint }, network);
 }
 
 /*
@@ -170,4 +175,15 @@ export type Ordinal = {
   size: number;
 };
 
-export type Inscription<T = unknown> = T;
+export type Inscription = {
+  id: string;
+  outpoint: string;
+  owner: string;
+  fee: number;
+  height: number;
+  sat: number;
+  timestamp: number;
+  media_type: string;
+  media_size: number;
+  media_content: string;
+};

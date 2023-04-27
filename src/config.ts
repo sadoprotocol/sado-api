@@ -4,6 +4,7 @@ export const config = {
   port: normalizePort(getEnvironmentVariable("PORT")),
   lookupEndpoint: "https://regtest.ordit.io/utxo",
   infuraGateway: getEnvironmentVariable("INFURA_GATEWAY"),
+  oceanEndpoint: getEnvironmentVariable("OCEAN_ENDPOINT"),
   redisUrl: getEnvironmentVariable("REDIS_URL"),
 };
 

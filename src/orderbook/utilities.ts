@@ -1,4 +1,5 @@
 import { Network } from "../libraries/network";
+import { PriceList } from "../libraries/pricelist";
 import { parseLocation } from "../libraries/transaction";
 import { Order } from "../services/infura";
 import { lookup } from "../services/lookup";
@@ -20,6 +21,21 @@ export async function getOrderOwner(order: Order, network: Network): Promise<str
     return undefined;
   }
   return tx.vout[vout]?.scriptPubKey?.address;
+}
+
+/**
+ * Convert the order asking/offering price to a sado price list instance.
+ *
+ * @param order - Order to get price list for.
+ *
+ * @returns Price list instance or `undefined` if no price is found.
+ */
+export async function getOrderPrice(order: Order): Promise<PriceList | undefined> {
+  if (order.satoshis) {
+    return new PriceList(parseInt(order.satoshis)).setUSD();
+  } else if (order.cardinals) {
+    return new PriceList(parseInt(order.cardinals)).setUSD();
+  }
 }
 
 /**

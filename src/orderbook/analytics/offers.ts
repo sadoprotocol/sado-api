@@ -1,3 +1,4 @@
+import { PriceList } from "../../libraries/pricelist";
 import { Offer } from "../../services/infura";
 import { getAskingPrice } from "../utilities";
 import { Collections } from "./collections";
@@ -7,35 +8,44 @@ export class OffersAnalytics {
 
   readonly #pending = {
     count: 0,
-    total: 0,
+    total: new PriceList(),
   };
 
   readonly #completed = {
     count: 0,
-    total: 0,
+    total: new PriceList(),
   };
 
   #count = 0;
-  #total = 0;
+  #total = new PriceList();
 
   addPending(offer: Offer) {
     const price = getAskingPrice(offer.order);
     this.#collections.addCollection(offer.order, price);
     this.addTotal(price);
     this.#pending.count += 1;
-    this.#pending.total += price;
+    this.#pending.total.increment(price);
   }
 
   addCompleted(offer: Offer) {
     const price = getAskingPrice(offer.order);
     this.addTotal(price);
     this.#completed.count += 1;
-    this.#completed.total += price;
+    this.#completed.total.increment(price);
   }
 
   addTotal(price: number) {
     this.#count += 1;
-    this.#total += price;
+    this.#total.increment(price);
+  }
+
+  async setPriceList() {
+    return Promise.all([
+      this.#collections.setPriceList(),
+      this.#pending.total.setUSD(),
+      this.#completed.total.setUSD(),
+      this.#total.setUSD(),
+    ]);
   }
 
   toJSON() {

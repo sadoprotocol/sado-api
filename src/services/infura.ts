@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 
 import { config } from "../config";
 import { makeObjectKeyChecker } from "../libraries/object";
+import { PriceList } from "../libraries/pricelist";
 import { redis } from "./redis";
 
 const FETCH_REQUEST_DEFAULTS = {
@@ -153,6 +154,11 @@ export type Order<Meta extends Record<string, unknown> = Record<string, unknown>
   maker: string;
 
   /**
+   * Added by SADO API orderbook process.
+   */
+  price?: PriceList;
+
+  /**
    * Amount of satoshis required/offered to execute the fulfill the order.
    *
    * SELL - Integer number of lowest denomination required to purchase the ordinal.
@@ -214,6 +220,12 @@ export type Offer = {
   origin: string;
 
   /**
+   * Order the offer is being made for. This is used by the SADO API
+   * process and response.
+   */
+  order: Order;
+
+  /**
    * PSBT (Partially Signed BTC Transaction)
    *
    * An offer is a partially signed transaction that is signed by either
@@ -242,17 +254,6 @@ export type Offer = {
    * NOTE! This is required if the taker is using a BECH32 address.
    */
   desc?: string;
-} & OfferPartial;
-
-/**
- * Offer partial is defines mutated fields of an offer used during the
- * orderbook build process.
- *
- * [TODO] Find a better implementation for this during continued
- *        orderbook development.
- */
-type OfferPartial = {
-  order: Order;
 };
 
 export type OrderType = "sell" | "buy";
