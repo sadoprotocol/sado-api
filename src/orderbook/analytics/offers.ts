@@ -39,15 +39,6 @@ export class OffersAnalytics {
     this.#total.increment(price);
   }
 
-  async setPriceList() {
-    return Promise.all([
-      this.#collections.setPriceList(),
-      this.#pending.total.setUSD(),
-      this.#completed.total.setUSD(),
-      this.#total.setUSD(),
-    ]);
-  }
-
   toJSON() {
     return {
       collections: this.#collections.toValue(),
