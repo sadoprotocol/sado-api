@@ -129,7 +129,7 @@ export type Transaction = {
   blocktime: number;
 };
 
-type Vin = {
+export type Vin = {
   txid: string;
   vout: number;
   scriptSig: ScriptSig;

@@ -44,6 +44,12 @@ export class OrdinalsMovedException extends SadoException {
   }
 }
 
+export class OrderResolvedExternallyException extends SadoException {
+  constructor() {
+    super("ORDER_RESOLVED_EXTERNALLY", "Order was resolved externally");
+  }
+}
+
 export class OriginNotFoundException extends SadoException {
   constructor(origin: string) {
     super("ORIGIN_NOT_FOUND", `Origin does not exist`, { origin });

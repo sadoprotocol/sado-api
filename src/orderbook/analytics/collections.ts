@@ -23,14 +23,6 @@ export class Collections {
     }
   }
 
-  async setPriceList() {
-    const promises: Promise<any>[] = [];
-    for (const key in this.#collections) {
-      promises.push(this.#collections[key].floor.setUSD(), this.#collections[key].total.setUSD());
-    }
-    return Promise.all(promises);
-  }
-
   toValue() {
     return this.#collections;
   }

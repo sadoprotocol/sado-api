@@ -1,8 +1,10 @@
+import { BTC_TO_SAT } from "../libraries/bitcoin";
 import { Network } from "../libraries/network";
 import { PriceList } from "../libraries/pricelist";
 import { parseLocation } from "../libraries/transaction";
-import { Order } from "../services/infura";
-import { lookup } from "../services/lookup";
+import { Offer, Order } from "../services/infura";
+import { lookup, Transaction } from "../services/lookup";
+import { redis } from "../services/redis";
 
 /**
  * Get the address of the owner defined in a sado transaction location. A
@@ -30,11 +32,11 @@ export async function getOrderOwner(order: Order, network: Network): Promise<str
  *
  * @returns Price list instance or `undefined` if no price is found.
  */
-export async function getOrderPrice(order: Order): Promise<PriceList | undefined> {
+export function getOrderPrice(order: Order): PriceList | undefined {
   if (order.satoshis) {
-    return new PriceList(parseInt(order.satoshis)).setUSD();
+    return new PriceList(parseInt(order.satoshis));
   } else if (order.cardinals) {
-    return new PriceList(parseInt(order.cardinals)).setUSD();
+    return new PriceList(parseInt(order.cardinals));
   }
 }
 
@@ -53,4 +55,42 @@ export function getAskingPrice(order: Order): number {
     return parseInt(order.cardinals);
   }
   return 0;
+}
+
+/**
+ * Get confirmed transaction from takers list of transactions.
+ *
+ * @param txid    - Order location transaction id.
+ * @param order   - Order which the offer is based on.
+ * @param offer   - Offer to get transaction for.
+ * @param network - Network to lookup transaction on.
+ *
+ * @returns Transaction if found, undefined otherwise.
+ */
+export async function getTakerTransaction(
+  txid: string,
+  order: Order,
+  offer: Offer,
+  network: Network
+): Promise<Transaction | undefined> {
+  const cacheKey = `${txid}/${order.maker}/${offer.taker}`;
+  const cached = await redis.getData<Transaction>({ key: cacheKey });
+  if (cached !== undefined) {
+    return cached;
+  }
+  const txs = await lookup.transactions(offer.taker, network);
+  for (const tx of txs) {
+    for (const vin of tx.vin) {
+      const value = getAskingPrice(order);
+      if (
+        vin.txid === txid &&
+        tx.vout[0]?.scriptPubKey.address === offer.taker &&
+        tx.vout[1]?.scriptPubKey.address === order.maker &&
+        tx.vout[1]?.value === value / BTC_TO_SAT
+      ) {
+        redis.setData({ key: cacheKey, data: tx });
+        return tx;
+      }
+    }
+  }
 }

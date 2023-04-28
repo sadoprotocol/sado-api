@@ -1,4 +1,4 @@
-import { ocean } from "../services/ocean";
+import { dexPrices } from "../services/dexprices";
 
 /**
  * Satoshis in a BTC.
@@ -24,11 +24,6 @@ export function satToBtc(sat: number): number {
  *
  * @returns USD value.
  */
-export async function btcToUsd(btc: number): Promise<number> {
-  const dexprices = await ocean.getDexPrices();
-  const price = dexprices?.["BTC"]?.denominationPrice;
-  if (price) {
-    return btc * parseFloat(price);
-  }
-  return 0;
+export function btcToUsd(btc: number): number {
+  return btc * dexPrices.usd;
 }

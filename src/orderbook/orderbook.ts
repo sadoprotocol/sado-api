@@ -1,8 +1,10 @@
 import debug from "debug";
+import pLimit from "p-limit";
 
 import { Network } from "../libraries/network";
-import { getAddressVoutValue } from "../libraries/transaction";
 import { lookup, Transaction } from "../services/lookup";
+import { OffersAnalytics } from "./analytics/offers";
+import { OrdersAnalytics } from "./analytics/orders";
 import { Offers } from "./offers";
 import { Orders } from "./orders";
 
@@ -43,7 +45,7 @@ export class OrderBook {
 
     await this.#process(txs);
     await this.#link();
-    await this.#price();
+    await this.#fulfill();
 
     return this;
   }
@@ -56,15 +58,20 @@ export class OrderBook {
    */
   async #process(txs: Transaction[]): Promise<void> {
     const t = performance.now();
+    const limit = pLimit(10);
     const promises = [];
     for (const tx of txs) {
       for (const vout of tx.vout) {
         const sado = parseSado(vout.scriptPubKey.utf8);
         if (sado !== undefined) {
           if (sado.type === "order") {
-            promises.push(this.orders.addOrder(sado.cid, getAddressVoutValue(tx, this.address)));
+            promises.push(
+              limit(() => this.orders.addOrder(sado.cid, { network: this.network, address: this.address, tx }))
+            );
           } else if (sado.type === "offer") {
-            promises.push(this.offers.addOffer(sado.cid, getAddressVoutValue(tx, this.address)));
+            promises.push(
+              limit(() => this.offers.addOffer(sado.cid, { network: this.network, address: this.address, tx }))
+            );
           }
         }
       }
@@ -83,32 +90,51 @@ export class OrderBook {
     this.ts.push(performance.now() - t);
   }
 
-  async #price() {
+  async #fulfill() {
     const t = performance.now();
-    await Promise.all([this.orders.setPriceList(), this.offers.setPriceList()]);
+    await this.orders.fulfillOrders();
     this.ts.push(performance.now() - t);
   }
 
   toJSON() {
-    return {
+    const response: any = {
       ts: this.ts.map((t) => t / 1_000),
       analytics: {
-        orders: this.orders.analytics,
-        offers: this.offers.analytics,
+        orders: new OrdersAnalytics(),
+        offers: new OffersAnalytics(),
       },
       pending: {
-        orders: this.orders.pending,
-        offers: this.offers.pending,
+        orders: [],
+        offers: [],
       },
       rejected: {
-        orders: this.orders.rejected,
-        offers: this.offers.rejected,
+        orders: [],
+        offers: [],
       },
       completed: {
-        orders: this.orders.completed,
-        offers: this.offers.completed,
+        orders: [],
+        offers: [],
       },
     };
+    for (const order of this.orders.list) {
+      response[order.status].orders.push(order.toJSON());
+      if (order.status === "pending") {
+        response.analytics.orders.addPending(order.data);
+      }
+      if (order.status === "completed") {
+        response.analytics.orders.addCompleted(order.data);
+      }
+    }
+    for (const offer of this.offers.list) {
+      response[offer.status].offers.push(offer.toJSON());
+      if (offer.status === "pending") {
+        response.analytics.offers.addPending(offer.data);
+      }
+      if (offer.status === "completed") {
+        response.analytics.offers.addCompleted(offer.data);
+      }
+    }
+    return response;
   }
 }
 
