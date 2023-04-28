@@ -97,6 +97,8 @@ export class OrderBook {
   }
 
   toJSON() {
+    const duplicates: any = {};
+
     const response: any = {
       ts: this.ts.map((t) => t / 1_000),
       analytics: {
@@ -116,15 +118,24 @@ export class OrderBook {
         offers: [],
       },
     };
-    for (const order of this.orders.list) {
-      response[order.status].orders.push(order.toJSON());
+
+    for (const order of this.orders.list.sort((a, b) => b.data.ts - a.data.ts)) {
       if (order.status === "pending") {
+        const duplicateIndex = duplicates[order.data.location];
+        if (duplicateIndex === undefined) {
+          duplicates[order.data.location] = response.pending.orders.length;
+        } else {
+          response.pending.orders[duplicateIndex].value += order.value ?? 0;
+          continue;
+        }
         response.analytics.orders.addPending(order.data);
       }
       if (order.status === "completed") {
         response.analytics.orders.addCompleted(order.data);
       }
+      response[order.status].orders.push(order.toJSON());
     }
+
     for (const offer of this.offers.list) {
       response[offer.status].offers.push(offer.toJSON());
       if (offer.status === "pending") {
@@ -134,6 +145,7 @@ export class OrderBook {
         response.analytics.offers.addCompleted(offer.data);
       }
     }
+
     return response;
   }
 }
