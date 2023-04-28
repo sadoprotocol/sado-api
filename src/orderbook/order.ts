@@ -156,6 +156,7 @@ export class Order {
 
     response.cid = this.cid;
     response.time = this.time;
+    response.ago = this.time.ago; // [TODO] Deprecate this in favor of `time.ago`
     response.value = this.value;
     response.price = this.price;
     response.offers = this.offers;
