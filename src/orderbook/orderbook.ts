@@ -119,7 +119,7 @@ export class OrderBook {
       },
     };
 
-    for (const order of this.orders.list.sort((a, b) => b.data.ts - a.data.ts)) {
+    for (const order of this.orders.list.sort((a, b) => b.time.block - a.time.block)) {
       if (order.status === "pending") {
         const duplicateIndex = duplicates[order.data.location];
         if (duplicateIndex === undefined) {
