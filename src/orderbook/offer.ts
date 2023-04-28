@@ -17,6 +17,7 @@ import { getOrderOwner, getOrderPrice, getTakerTransaction } from "./utilities";
 
 export class Offer {
   status: OfferStatus = "pending";
+  time: OfferTime;
 
   vout?: Vout;
   value?: number;
@@ -28,7 +29,14 @@ export class Offer {
     readonly data: IPFSOffer,
     readonly order: IPFSOrder,
     readonly context: OfferContext
-  ) {}
+  ) {
+    const blockTime = context.tx.blocktime * 1000;
+    this.time = {
+      offer: data.ts,
+      block: blockTime,
+      ago: moment(blockTime).fromNow(),
+    };
+  }
 
   /*
    |--------------------------------------------------------------------------------
@@ -140,7 +148,7 @@ export class Offer {
     const response: any = this.data;
 
     response.cid = this.cid;
-    response.ago = moment(this.data.ts).fromNow();
+    response.time = this.time;
     response.value = this.value;
     response.order = this.order;
 
@@ -185,3 +193,9 @@ export type OfferContext = {
 };
 
 type OfferStatus = "pending" | "rejected" | "completed";
+
+type OfferTime = {
+  offer: number;
+  block: number;
+  ago: string;
+};

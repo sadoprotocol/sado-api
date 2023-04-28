@@ -22,6 +22,7 @@ export class Order {
     count: 0,
     cids: [],
   };
+  time: OrderTime;
 
   price?: PriceList;
   vout?: Vout;
@@ -30,6 +31,12 @@ export class Order {
 
   private constructor(readonly cid: string, readonly data: IPFSOrder, readonly context: OrderContext) {
     this.price = getOrderPrice(data);
+    const blockTime = context.tx.blocktime * 1000;
+    this.time = {
+      order: data.ts,
+      block: blockTime,
+      ago: moment(blockTime).fromNow(),
+    };
   }
 
   /*
@@ -148,7 +155,7 @@ export class Order {
     }
 
     response.cid = this.cid;
-    response.ago = moment(this.data.ts).fromNow();
+    response.time = this.time;
     response.value = this.value;
     response.price = this.price;
     response.offers = this.offers;
@@ -197,6 +204,12 @@ export type OrderContext = {
 };
 
 type OrderStatus = "pending" | "rejected" | "completed";
+
+type OrderTime = {
+  order: number;
+  block: number;
+  ago: string;
+};
 
 type OrderOffers = {
   count: number;
