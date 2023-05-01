@@ -23,10 +23,10 @@ export class Order {
     cids: [],
   };
   time: OrderTime;
+  value = new PriceList();
 
   price?: PriceList;
   vout?: Vout;
-  value?: number;
   rejection?: any;
 
   private constructor(readonly cid: string, readonly data: IPFSOrder, readonly context: OrderContext) {
@@ -76,10 +76,11 @@ export class Order {
   }
 
   async #hasListingFee(): Promise<void> {
-    const value = (this.value = getAddressVoutValue(this.context.tx, this.context.address));
+    const value = getAddressVoutValue(this.context.tx, this.context.address);
     if (value === undefined || value <= 0) {
       throw new InsufficientFundsException();
     }
+    this.value.set(value);
   }
 
   async #hasValidOwner(): Promise<void> {
