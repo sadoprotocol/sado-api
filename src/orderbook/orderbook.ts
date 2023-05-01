@@ -125,7 +125,7 @@ export class OrderBook {
         if (duplicateIndex === undefined) {
           duplicates[order.data.location] = response.pending.orders.length;
         } else {
-          response.pending.orders[duplicateIndex].value += order.value ?? 0;
+          response.pending.orders[duplicateIndex].value.increment(order.value.sat);
           continue;
         }
         response.analytics.orders.addPending(order.data);

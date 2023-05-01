@@ -1,6 +1,7 @@
 import moment from "moment";
 
 import { Network } from "../libraries/network";
+import { PriceList } from "../libraries/pricelist";
 import { getAddressVoutValue, hasOrdinalsAndInscriptions, hasSignature, parseLocation } from "../libraries/transaction";
 import { infura, Offer as IPFSOffer, Order as IPFSOrder } from "../services/infura";
 import { lookup, Transaction, Vin, Vout } from "../services/lookup";
@@ -18,9 +19,9 @@ import { getOrderOwner, getOrderPrice, getTakerTransaction } from "./utilities";
 export class Offer {
   status: OfferStatus = "pending";
   time: OfferTime;
+  value = new PriceList();
 
   vout?: Vout;
-  value?: number;
   proof?: string;
   rejection?: any;
 
@@ -77,10 +78,11 @@ export class Offer {
   }
 
   async #hasListingFee(): Promise<void> {
-    const value = (this.value = getAddressVoutValue(this.context.tx, this.context.address));
+    const value = getAddressVoutValue(this.context.tx, this.context.address);
     if (value === undefined || value <= 0) {
       throw new InsufficientFundsException();
     }
+    this.value.set(value);
   }
 
   async #hasValidOffer(): Promise<void> {
