@@ -1,4 +1,4 @@
-import { dexPrices } from "../services/dexprices";
+import { dexPrices } from "../Services/DexPrices";
 
 /**
  * Satoshis in a BTC.

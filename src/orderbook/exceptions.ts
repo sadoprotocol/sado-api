@@ -1,4 +1,4 @@
-class SadoException {
+export abstract class SadoException {
   constructor(readonly code: string, readonly message: string, readonly data: any = {}) {}
 }
 
@@ -40,7 +40,7 @@ export class VoutOutOfRangeException extends SadoException {
 
 export class OrdinalsMovedException extends SadoException {
   constructor() {
-    super("ORDINALS_MOVES", "Ordinals are no longer present in the transaction");
+    super("ORDINALS_MOVED", "Ordinals are no longer present in the transaction");
   }
 }
 
@@ -75,5 +75,11 @@ export class InvalidOfferOwnerException extends SadoException {
       maker,
       taker,
     });
+  }
+}
+
+export class OfferProofFailedException extends SadoException {
+  constructor() {
+    super("OFFER_PROOF_FAILED", "Could not resolve offer proof");
   }
 }

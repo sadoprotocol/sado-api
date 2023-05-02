@@ -4,7 +4,7 @@ import createError from "http-errors";
 import logger from "morgan";
 import path from "path";
 
-import { router } from "./router";
+import { router } from "./Router";
 
 export const app = express();
 

@@ -1,8 +1,16 @@
 version: "3"
 services:
-  redis:
+  database:
+    image: mongo:latest
+    container_name: sado-database
+    ports:
+      - 27017:27017
+    volumes:
+      - ./.bin/data/mongodb:/data/db
+
+  cache:
     image: redis
-    container_name: sado-redis
+    container_name: sado-cache
     ports:
       - 6379:6379
     volumes:

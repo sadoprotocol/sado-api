@@ -1,3 +1,17 @@
+# API Configuration
+
 PORT=3030
-INFURA_GATEWAY="https://sado.infura-ipfs.io"
-REDIS_URL="redis://localhost:6379"
+
+# Databases
+
+MONGODB_NAME=sado
+MONGODB_URI=mongodb://localhost:27017
+REDIS_URL=redis://localhost:6379
+
+# IPFS
+
+INFURA_GATEWAY=https://sado.infura-ipfs.io
+
+# Ocean
+
+OCEAN_ENDPOINT=https://ocean.defichain.com/v0/mainnet

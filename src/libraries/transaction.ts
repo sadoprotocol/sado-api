@@ -1,7 +1,7 @@
 import * as btc from "bitcoinjs-lib";
 
-import { Transaction, Vout } from "../services/lookup";
-import { BTC_TO_SAT } from "./bitcoin";
+import { Transaction, Vout } from "../Entities/Transaction";
+import { BTC_TO_SAT } from "./Bitcoin";
 
 /**
  * Check if the provided raw transaction hex has a signature.
@@ -29,14 +29,14 @@ export function hasSignature(rawTx: string): boolean {
 }
 
 /**
- * Check if provided vout has ordinals and inscriptions.
+ * Check if provided vout has pending ordinals present.
  *
  * @param vout - Vout to check.
  *
- * @returns `true` if vout has ordinals and inscriptions, `false` otherwise.
+ * @returns `true` if vout has ordinals, `false` otherwise.
  */
-export function hasOrdinalsAndInscriptions(vout: Vout): boolean {
-  return vout.ordinals.length > 0 && vout.inscriptions.length > 0;
+export function hasPendingOrdinals(vout: Vout): boolean {
+  return vout.ordinals.length > 0;
 }
 
 /**
