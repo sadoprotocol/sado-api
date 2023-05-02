@@ -1,7 +1,7 @@
-import { PriceList } from "../../libraries/pricelist";
-import { Offer } from "../../services/infura";
-import { getAskingPrice } from "../utilities";
-import { Collections } from "./collections";
+import { PriceList } from "../../Libraries/PriceList";
+import { IPFSOrder } from "../../Services/Infura";
+import { getAskingPrice } from "../Utilities";
+import { Collections } from "./Collections";
 
 export class OffersAnalytics {
   readonly #collections = new Collections();
@@ -19,16 +19,16 @@ export class OffersAnalytics {
   #count = 0;
   #total = new PriceList();
 
-  addPending(offer: Offer) {
-    const price = getAskingPrice(offer.order);
-    this.#collections.addCollection(offer.order, price);
+  addPending(order: IPFSOrder) {
+    const price = getAskingPrice(order);
+    this.#collections.addCollection(order, price);
     this.addTotal(price);
     this.#pending.count += 1;
     this.#pending.total.increment(price);
   }
 
-  addCompleted(offer: Offer) {
-    const price = getAskingPrice(offer.order);
+  addCompleted(order: IPFSOrder) {
+    const price = getAskingPrice(order);
     this.addTotal(price);
     this.#completed.count += 1;
     this.#completed.total.increment(price);

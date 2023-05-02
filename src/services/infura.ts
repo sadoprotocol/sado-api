@@ -1,9 +1,10 @@
+import debug from "debug";
 import fetch from "node-fetch";
 
-import { config } from "../config";
-import { makeObjectKeyChecker } from "../libraries/object";
-import { PriceList } from "../libraries/pricelist";
-import { redis } from "./redis";
+import { config } from "../Config";
+import { makeObjectKeyChecker } from "../Libraries/Object";
+
+const log = debug("sado-infura");
 
 const FETCH_REQUEST_DEFAULTS = {
   method: "GET",
@@ -33,25 +34,27 @@ export const infura = {
  |--------------------------------------------------------------------------------
  */
 
-async function getOrder(cid: string): Promise<InfuraResponse<Order>> {
-  const data = await get<Order>(cid);
+async function getOrder(cid: string): Promise<InfuraResponse<IPFSOrder>> {
+  const data = await get<IPFSOrder>(cid);
   if (data === undefined) {
     return errorResponse(`Order CID '${cid}' not found`);
   }
   if (hasValidOrderKeys(data) === false) {
-    return errorResponse<Order>(`Malformed CID '${cid}', order missing required keys`, data);
+    return errorResponse<IPFSOrder>(`Malformed CID '${cid}', order missing required keys`, data);
   }
+  data.cid = cid;
   return successResponse(data);
 }
 
-async function getOffer(cid: string): Promise<InfuraResponse<Offer>> {
-  const data = await get<Offer>(cid);
+async function getOffer(cid: string): Promise<InfuraResponse<IPFSOffer>> {
+  const data = await get<IPFSOffer>(cid);
   if (data === undefined) {
     return errorResponse(`Offer CID '${cid}' not found`);
   }
   if (hasValidOfferKeys(data) === false) {
-    return errorResponse<Offer>(`Malformed CID '${cid}', offer missing required keys`, data);
+    return errorResponse<IPFSOffer>(`Malformed CID '${cid}', offer missing required keys`, data);
   }
+  data.cid = cid;
   return successResponse(data);
 }
 
@@ -61,24 +64,19 @@ async function getOffer(cid: string): Promise<InfuraResponse<Offer>> {
  |--------------------------------------------------------------------------------
  */
 
-async function get<Data extends Order | Offer>(cid: string): Promise<Data | undefined> {
-  const cachedData = await redis.getData<Data>({ key: cid });
-  if (cachedData) {
-    return cachedData;
-  }
+async function get<Data extends IPFSOrder | IPFSOffer>(cid: string): Promise<Data | undefined> {
+  log("Fetching CID '%s'", cid);
   const response = await fetch(config.infuraGateway + "/ipfs/" + cid, FETCH_REQUEST_DEFAULTS);
   if (response.status === 200) {
-    const data = await response.json();
-    void redis.setData({ key: cid, data });
-    return data;
+    return response.json();
   }
 }
 
-function successResponse<Data extends Order | Offer>(data: Data): InfuraResponse<Data> {
+function successResponse<Data extends IPFSOrder | IPFSOffer>(data: Data): InfuraResponse<Data> {
   return data;
 }
 
-function errorResponse<Data extends Order | Offer>(error: string, data?: Data): InfuraResponse<any> {
+function errorResponse<Data extends IPFSOrder | IPFSOffer>(error: string, data?: Data): InfuraResponse<any> {
   return { error, data };
 }
 
@@ -88,7 +86,7 @@ function errorResponse<Data extends Order | Offer>(error: string, data?: Data): 
  |--------------------------------------------------------------------------------
  */
 
-type InfuraResponse<Data extends Order | Offer> =
+type InfuraResponse<Data extends IPFSOrder | IPFSOffer> =
   | Data
   | {
       error: string;
@@ -123,7 +121,9 @@ type InfuraResponse<Data extends Order | Offer> =
  *
  *  - An order must have one of [satoshis | cardinals | satoshi].
  */
-export type Order<Meta extends Record<string, unknown> = Record<string, unknown>> = {
+export type IPFSOrder = {
+  cid: string;
+
   /**
    * Timestamp to act as nonce.
    *
@@ -152,11 +152,6 @@ export type Order<Meta extends Record<string, unknown> = Record<string, unknown>
    * NOTE! When a maker address is a `bech32` address then a `desc` field is required.
    */
   maker: string;
-
-  /**
-   * Added by SADO API orderbook process.
-   */
-  price?: PriceList;
 
   /**
    * Amount of satoshis required/offered to execute the fulfill the order.
@@ -190,7 +185,7 @@ export type Order<Meta extends Record<string, unknown> = Record<string, unknown>
   /**
    * Metadata attached to the order.
    */
-  meta?: Meta;
+  meta?: Record<string, unknown>;
 
   /**
    * Signature.
@@ -204,7 +199,9 @@ export type Order<Meta extends Record<string, unknown> = Record<string, unknown>
   desc?: string;
 };
 
-export type Offer = {
+export type IPFSOffer = {
+  cid: string;
+
   /**
    * Timestamp to act as nonce.
    *
@@ -223,7 +220,7 @@ export type Offer = {
    * Order the offer is being made for. This is used by the SADO API
    * process and response.
    */
-  order: Order;
+  order: IPFSOrder;
 
   /**
    * PSBT (Partially Signed BTC Transaction)

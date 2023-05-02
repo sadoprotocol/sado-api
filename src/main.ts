@@ -1,7 +1,11 @@
 import http from "node:http";
 
-import { app } from "./app";
-import { config } from "./config";
+import debug from "debug";
+
+import { app } from "./App";
+import { config } from "./Config";
+
+const log = debug("sado-api");
 
 const { port } = config;
 
@@ -71,5 +75,5 @@ function onError(error: NodeJS.ErrnoException) {
 function onListening() {
   const addr = server.address();
   const bind = typeof addr === "string" ? "pipe " + addr : "port " + addr?.port ?? -1;
-  console.log("Listening on " + bind);
+  log("Listening on " + bind);
 }

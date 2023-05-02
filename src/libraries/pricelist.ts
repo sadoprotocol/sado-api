@@ -1,4 +1,4 @@
-import { btcToUsd, satToBtc } from "./bitcoin";
+import { btcToUsd, satToBtc } from "./Bitcoin";
 
 export class PriceList {
   constructor(public sat = 0, public btc = satToBtc(sat), public usd = btcToUsd(btc)) {}

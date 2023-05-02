@@ -1,8 +1,11 @@
+import debug from "debug";
 import fetch, { RequestInit } from "node-fetch";
 
-import { config } from "../config";
-import { Network } from "../libraries/network";
-import { redis } from "./redis";
+import { config } from "../Config";
+import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Entities/Transaction";
+import { Network } from "../Libraries/Network";
+
+const log = debug("sado-lookup");
 
 export const lookup = {
   transactions,
@@ -27,16 +30,7 @@ async function transactions(address: string, network: Network): Promise<Transact
 }
 
 async function transaction(txid: string, network: Network): Promise<Transaction | undefined> {
-  const cacheKey = `${network}/${txid}`;
-  const cachedTx = await redis.getData<Transaction>({ key: cacheKey });
-  if (cachedTx) {
-    return cachedTx;
-  }
-  const tx = await get("/transaction", { txid }, network);
-  if (tx) {
-    void redis.setData({ key: cacheKey, data: tx });
-  }
-  return tx;
+  return get("/transaction", { txid }, network);
 }
 
 async function balance(address: string, network: Network): Promise<Balance | undefined> {
@@ -80,6 +74,8 @@ async function get(path: string, data: unknown, network: Network): Promise<any> 
     requestObject.method = "POST";
   }
 
+  log("looking up '%s' '%o'", path, data);
+
   const response = await fetch(url, requestObject);
   if (response.status === 200) {
     const json = await response.json();
@@ -110,80 +106,4 @@ type Unspent = {
   value: number;
   ordinals: Ordinal[];
   inscriptions: Inscription[];
-};
-
-export type Transaction = {
-  txid: string;
-  hash: string;
-  version: number;
-  size: number;
-  vsize: number;
-  weight: number;
-  locktime: number;
-  vin: Vin[];
-  vout: Vout[];
-  hex: string;
-  blockhash: string;
-  confirmations: number;
-  time: number;
-  blocktime: number;
-};
-
-export type Vin = {
-  txid: string;
-  vout: number;
-  scriptSig: ScriptSig;
-  txinwitness: string[];
-  sequence: number;
-};
-
-export type Vout = {
-  value: number;
-  n: number;
-  scriptPubKey: ScriptPubKey;
-  ordinals: Ordinal[];
-  inscriptions: Inscription[];
-};
-
-type ScriptSig = {
-  asm: string;
-  hex: string;
-};
-
-type ScriptPubKey = {
-  asm: string;
-  desc: string;
-  hex: string;
-  address: string;
-  type: string;
-  utf8?: string;
-};
-
-export type Ordinal = {
-  number: number;
-  decimal: string;
-  degree: string;
-  name: string;
-  height: number;
-  cycle: number;
-  epoch: number;
-  period: number;
-  offset: number;
-  rarity: string; // [TODO] find the rarity values
-  output: string;
-  start: number;
-  size: number;
-};
-
-export type Inscription = {
-  id: string;
-  outpoint: string;
-  owner: string;
-  fee: number;
-  height: number;
-  sat: number;
-  timestamp: number;
-  media_type: string;
-  media_size: number;
-  media_content: string;
 };

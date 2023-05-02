@@ -1,10 +1,34 @@
-import { BTC_TO_SAT } from "../libraries/bitcoin";
-import { Network } from "../libraries/network";
-import { PriceList } from "../libraries/pricelist";
-import { parseLocation } from "../libraries/transaction";
-import { Offer, Order } from "../services/infura";
-import { lookup, Transaction } from "../services/lookup";
-import { redis } from "../services/redis";
+import { getTransaction, Transaction } from "../Entities/Transaction";
+import { BTC_TO_SAT } from "../Libraries/Bitcoin";
+import { Network } from "../Libraries/Network";
+import { PriceList } from "../Libraries/PriceList";
+import { parseLocation } from "../Libraries/Transaction";
+import { IPFSOffer, IPFSOrder } from "../Services/Infura";
+import { lookup } from "../Services/Lookup";
+
+/**
+ * Get order item from a vout scriptPubKey utf8 string.
+ *
+ * A valid order item contains a value in the format of `sado=order:cid` or `sado=offer:cid`.
+ *
+ * @param utf8 - ScriptPubKey utf8 string.
+ *
+ * @returns Order item or `undefined` if not found.
+ */
+export function parseSado(utf8?: string):
+  | {
+      type: "order" | "offer";
+      cid: string;
+    }
+  | undefined {
+  if (utf8?.includes("sado=") === true) {
+    const vs = utf8.split("=");
+    const [type, cid] = vs[1].split(":");
+    if (type === "order" || type === "offer") {
+      return { type, cid };
+    }
+  }
+}
 
 /**
  * Get the address of the owner defined in a sado transaction location. A
@@ -16,9 +40,9 @@ import { redis } from "../services/redis";
  *
  * @returns Address of the owner or `undefined` if no owner is found.
  */
-export async function getOrderOwner(order: Order, network: Network): Promise<string | undefined> {
+export async function getOrderOwner(order: IPFSOrder, network: Network): Promise<string | undefined> {
   const [txid, vout] = parseLocation(order.location);
-  const tx = await lookup.transaction(txid, network);
+  const tx = await getTransaction(txid, network);
   if (tx === undefined) {
     return undefined;
   }
@@ -32,7 +56,7 @@ export async function getOrderOwner(order: Order, network: Network): Promise<str
  *
  * @returns Price list instance or `undefined` if no price is found.
  */
-export function getOrderPrice(order: Order): PriceList | undefined {
+export function getOrderPrice(order: IPFSOrder): PriceList | undefined {
   if (order.satoshis) {
     return new PriceList(parseInt(order.satoshis));
   } else if (order.cardinals) {
@@ -47,7 +71,7 @@ export function getOrderPrice(order: Order): PriceList | undefined {
  *
  * @returns The asking price in cardinals or 0 for trades.
  */
-export function getAskingPrice(order: Order): number {
+export function getAskingPrice(order: IPFSOrder): number {
   if (order.satoshis !== undefined) {
     return parseInt(order.satoshis);
   }
@@ -69,15 +93,10 @@ export function getAskingPrice(order: Order): number {
  */
 export async function getTakerTransaction(
   txid: string,
-  order: Order,
-  offer: Offer,
+  order: IPFSOrder,
+  offer: IPFSOffer,
   network: Network
 ): Promise<Transaction | undefined> {
-  const cacheKey = `${txid}/${order.maker}/${offer.taker}`;
-  const cached = await redis.getData<Transaction>({ key: cacheKey });
-  if (cached !== undefined) {
-    return cached;
-  }
   const txs = await lookup.transactions(offer.taker, network);
   for (const tx of txs) {
     for (const vin of tx.vin) {
@@ -88,7 +107,6 @@ export async function getTakerTransaction(
         tx.vout[1]?.scriptPubKey.address === order.maker &&
         tx.vout[1]?.value === value / BTC_TO_SAT
       ) {
-        redis.setData({ key: cacheKey, data: tx });
         return tx;
       }
     }

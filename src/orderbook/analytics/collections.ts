@@ -1,11 +1,11 @@
-import { PriceList } from "../../libraries/pricelist";
-import { Order } from "../../services/infura";
+import { PriceList } from "../../Libraries/PriceList";
+import { IPFSOrder } from "../../Services/Infura";
 
 export class Collections {
   readonly #collections: CollectionsMap = {};
 
-  addCollection(order: Order<{ collection?: string }>, price: number): void {
-    const collection = order.meta?.collection;
+  addCollection(order: IPFSOrder, price: number): void {
+    const collection = getCollection(order.meta);
     if (collection === undefined) {
       return; // not part of collection, so we can skip this analytics step
     }
@@ -26,6 +26,17 @@ export class Collections {
   toValue() {
     return this.#collections;
   }
+}
+
+function getCollection(meta?: Record<string, unknown>): string | undefined {
+  if (meta === undefined) {
+    return undefined;
+  }
+  const collection = meta["collection"];
+  if (typeof collection !== "string") {
+    return undefined;
+  }
+  return collection;
 }
 
 /*
