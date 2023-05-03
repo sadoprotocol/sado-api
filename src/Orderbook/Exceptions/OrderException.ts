@@ -35,3 +35,9 @@ export class OrderFulfilledException extends SadoException {
     super("ORDER_FULFILLED", "Order was fulfilled by another offer");
   }
 }
+
+export class OrdinalsTransactedExternally extends SadoException {
+  constructor(txid: string) {
+    super("ORDINALS_TRANSACTED_EXTERNALLY", "Ordinal transacted to external recipients", { txid });
+  }
+}
