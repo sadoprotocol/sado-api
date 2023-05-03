@@ -30,6 +30,12 @@ export class OrderInvalidMaker extends SadoException {
   }
 }
 
+export class OrderClosed extends SadoException {
+  constructor() {
+    super("ORDER_CLOSED", "Order has been closed");
+  }
+}
+
 export class OrderFulfilledException extends SadoException {
   constructor() {
     super("ORDER_FULFILLED", "Order was fulfilled by another offer");
