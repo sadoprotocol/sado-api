@@ -10,6 +10,7 @@ import {
   OrderInvalidMaker,
   OrderTransactionNotFound,
   OrderVoutNotFound,
+  OrdinalsTransactedExternally,
 } from "../Orderbook/Exceptions/OrderException";
 import { getAskingPrice } from "../Orderbook/Utilities";
 import { infura, IPFSOrder } from "../Services/Infura";
@@ -70,7 +71,7 @@ export class Order {
   /**
    * Vout containing the ordinals and inscription array.
    */
-  readonly vout?: Vout;
+  vout?: Vout;
 
   /**
    * Rejection details if the order has been rejected.
@@ -138,7 +139,8 @@ export class Order {
 
   async resolve(): Promise<void> {
     try {
-      await hasValidOwner(this.order.location, this.order.maker, this.tx.network);
+      const vout = await getOrdinalVout(this.order.location, this.order.maker, this.tx.network);
+      await this.setVout(vout);
 
       // ### Offers
       // Update list of offers that has been made against this order.
@@ -173,6 +175,11 @@ export class Order {
   async setOffers(offers: OrderOffers): Promise<void> {
     await collection.updateOne({ _id: this._id }, { $set: { offers } });
     this.offers = offers;
+  }
+
+  async setVout(vout: Vout): Promise<void> {
+    await collection.updateOne({ _id: this._id }, { $set: { vout } });
+    this.vout = vout;
   }
 
   async setRejected(rejection: any): Promise<void> {
@@ -233,7 +240,7 @@ export class Order {
  * @param maker
  * @param network
  */
-async function hasValidOwner(location: string, maker: string, network: Network): Promise<void> {
+async function getOrdinalVout(location: string, maker: string, network: Network): Promise<Vout> {
   const [txid, n] = parseLocation(location);
 
   const tx = await getTransaction(txid, network);
@@ -249,6 +256,8 @@ async function hasValidOwner(location: string, maker: string, network: Network):
   if (vout.scriptPubKey.address !== maker) {
     throw new OrderInvalidMaker(location);
   }
+
+  return vout;
 }
 
 /**
@@ -297,6 +306,7 @@ async function getTaker(location: string, offers: OrderOffers, network: Network)
           return { address: offer.taker, location: `${tx.txid}:${utxo.n}` };
         }
       }
+      throw new OrdinalsTransactedExternally(tx.txid);
     }
   }
 }
