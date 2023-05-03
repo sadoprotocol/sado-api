@@ -8,8 +8,9 @@ import { OrderBook } from "../Orderbook/Orderbook";
  */
 
 export const sado = {
-  resolve,
-  get,
+  resolve: resolveOrderbook,
+  fetch: fetchOrderbook,
+  delete: deleteOrderbook,
 };
 
 /*
@@ -18,12 +19,17 @@ export const sado = {
  |--------------------------------------------------------------------------------
  */
 
-async function resolve(address: string, network: Network): Promise<void> {
+async function resolveOrderbook(address: string, network: Network): Promise<void> {
   const orderbook = new OrderBook(address, { network });
   await orderbook.resolve();
 }
 
-async function get(address: string, network: Network): Promise<any> {
+async function fetchOrderbook(address: string, network: Network): Promise<any> {
   const orderbook = new OrderBook(address, { network });
   return orderbook.fetch();
+}
+
+async function deleteOrderbook(address: string, network: Network): Promise<void> {
+  const orderbook = new OrderBook(address, { network });
+  await orderbook.delete();
 }

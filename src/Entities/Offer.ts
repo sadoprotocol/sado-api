@@ -3,21 +3,12 @@ import type { ObjectId, WithId } from "mongodb";
 
 import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
-import { getAddressVoutValue, hasPendingOrdinals, hasSignature, parseLocation } from "../Libraries/Transaction";
-import {
-  InvalidOfferOwnerException,
-  InvalidOwnerLocationException,
-  InvalidSignatureException,
-  OfferProofFailedException,
-  OrdinalsMovedException,
-  TransactionNotFoundException,
-  VoutOutOfRangeException,
-} from "../Orderbook/Exceptions";
-import { getAskingPrice, getOrderOwner, getTakerTransaction } from "../Orderbook/Utilities";
+import { getAddressVoutValue, hasSignature } from "../Libraries/Transaction";
+import { OfferSignatureInvalid } from "../Orderbook/Exceptions/OfferException";
+import { getAskingPrice } from "../Orderbook/Utilities";
 import { infura, IPFSOffer, IPFSOrder } from "../Services/Infura";
-import { lookup } from "../Services/Lookup";
 import { db } from "../Services/Mongo";
-import { Inscription, Ordinal, Transaction, Vin, Vout } from "./Transaction";
+import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
 
 const collection = db.collection<OfferDocument>("offers");
 
@@ -69,7 +60,7 @@ export class Offer {
   /**
    * Vout containing the ordinals and inscription array.
    */
-  vout?: Vout;
+  readonly vout?: Vout;
 
   /**
    * Transaction txid of the transaction that proves the offer is valid.
@@ -94,14 +85,6 @@ export class Offer {
     this.proof = document.proof;
     this.rejection = document.rejection;
   }
-
-  /*
-   |--------------------------------------------------------------------------------
-   | Accessors
-   |--------------------------------------------------------------------------------
-   */
-
-  // ...
 
   /*
   |--------------------------------------------------------------------------------
@@ -143,6 +126,10 @@ export class Offer {
     return documents.map((document) => new Offer(document));
   }
 
+  static async flush(address: string): Promise<void> {
+    await collection.deleteMany({ address });
+  }
+
   /*
    |--------------------------------------------------------------------------------
    | Resolve
@@ -151,68 +138,24 @@ export class Offer {
 
   async resolve(): Promise<void> {
     try {
-      await this.#hasValidOffer();
-      await this.#hasValidSignature();
-      await this.#hasValidTransaction();
-      await this.#hasCompleted();
-    } catch (err) {
-      await collection.updateOne({ _id: this._id }, { $set: { status: "rejected", rejection: err } });
+      await hasValidSignature(this.offer.offer);
+    } catch (error) {
+      await this.setRejected(error);
     }
   }
 
-  async #hasValidOffer(): Promise<void> {
-    const owner = await getOrderOwner(this.order, this.tx.network);
-    if (owner === undefined) {
-      throw new InvalidOwnerLocationException(this.order.location);
-    }
-    if ((owner === this.order.maker || owner === this.offer.taker) === false) {
-      throw new InvalidOfferOwnerException(owner, this.order.maker, this.offer.taker);
-    }
+  /*
+   |--------------------------------------------------------------------------------
+   | Mutators
+   |--------------------------------------------------------------------------------
+   */
+
+  async setCompleted(): Promise<void> {
+    await collection.updateOne({ _id: this._id }, { $set: { status: "completed" } });
   }
 
-  async #hasValidSignature(): Promise<void> {
-    if (hasSignature(this.offer.offer) === false) {
-      throw new InvalidSignatureException();
-    }
-  }
-
-  async #hasValidTransaction(): Promise<void> {
-    const [txid, voutN] = parseLocation(this.order.location);
-    const tx = await lookup.transaction(txid, this.tx.network);
-    if (tx === undefined) {
-      throw new TransactionNotFoundException(txid);
-    }
-    const vout = (this.vout = tx.vout.find((item) => item.n === voutN));
-    if (vout === undefined) {
-      throw new VoutOutOfRangeException(voutN);
-    }
-    await collection.updateOne({ _id: this._id }, { $set: { vout } });
-  }
-
-  async #hasCompleted(): Promise<void> {
-    if (this.order.type === "sell") {
-      const [txid] = parseLocation(this.order.location);
-      const tx = await getTakerTransaction(txid, this.order, this.offer, this.tx.network);
-      if (tx === undefined) {
-        if (this.vout !== undefined && hasPendingOrdinals(this.vout) === true) {
-          return;
-        }
-        throw new OrdinalsMovedException();
-      }
-      if (this.#hasValidProof(txid, tx.vin) === false) {
-        throw new OfferProofFailedException();
-      }
-      return void collection.updateOne({ _id: this._id }, { $set: { status: "completed", proof: tx.txid } });
-    }
-  }
-
-  #hasValidProof(txid: string, vins: Vin[]): boolean {
-    for (const vin of vins) {
-      if (vin.txid === txid) {
-        return true;
-      }
-    }
-    return false;
+  async setRejected(rejection: any): Promise<void> {
+    await collection.updateOne({ _id: this._id }, { $set: { status: "rejected", rejection } });
   }
 
   /*
@@ -256,6 +199,18 @@ export class Offer {
     }
 
     return response;
+  }
+}
+
+/*
+ |--------------------------------------------------------------------------------
+ | Validators
+ |--------------------------------------------------------------------------------
+ */
+
+async function hasValidSignature(offer: string): Promise<void> {
+  if (hasSignature(offer) === false) {
+    throw new OfferSignatureInvalid();
   }
 }
 

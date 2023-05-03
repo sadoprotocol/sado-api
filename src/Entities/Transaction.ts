@@ -85,6 +85,10 @@ export async function getTransaction(txid: string, network: Network): Promise<Tr
   return tx;
 }
 
+export async function flushTransactions(address: string): Promise<void> {
+  await collection.deleteMany({ from: address });
+}
+
 /*
  |--------------------------------------------------------------------------------
  | Types

@@ -1,7 +1,44 @@
 import * as btc from "bitcoinjs-lib";
 
-import { Transaction, Vout } from "../Entities/Transaction";
+import { getTransaction, Transaction, Vout } from "../Entities/Transaction";
+import { lookup } from "../Services/Lookup";
 import { BTC_TO_SAT } from "./Bitcoin";
+import { Network } from "./Network";
+
+/**
+ * Check if a UTXO on a transaction is spent.
+ *
+ * @param txid    - Root transaction to trace spent state from.
+ * @param n       - Vout position containing the receiving address.
+ * @param network - Network the transaction is registered on.
+ *
+ * @returns True if the UTXO is spent, false otherwise.
+ */
+export async function getUTXOState(
+  txid: string,
+  n: number,
+  network: Network
+): Promise<{
+  address: string;
+  spent: boolean;
+}> {
+  const tx = await getTransaction(txid, network);
+  if (tx === undefined) {
+    throw new Error(`Transaction ${txid} not found.`);
+  }
+  const vout = tx.vout[n];
+  if (vout === undefined) {
+    throw new Error(`Vout ${txid}.vout[${n}] not found.`);
+  }
+  const address = vout.scriptPubKey.address;
+  const txs = await lookup.unspents(address, network);
+  for (const tx of txs) {
+    if (tx.txid === txid) {
+      return { address, spent: false };
+    }
+  }
+  return { address, spent: true };
+}
 
 /**
  * Check if the provided raw transaction hex has a signature.
