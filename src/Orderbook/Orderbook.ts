@@ -2,6 +2,7 @@ import debug from "debug";
 
 import { Offer } from "../Entities/Offer";
 import { Order } from "../Entities/Order";
+import { flushTransactions } from "../Entities/Transaction";
 import { Network } from "../Libraries/Network";
 import { OffersAnalytics } from "./Analytics/OffersAnalytics";
 import { OrdersAnalytics } from "./Analytics/OrdersAnalytics";
@@ -97,6 +98,12 @@ export class OrderBook {
     response.ts = this.ts.map((t) => t / 1_000);
 
     return response;
+  }
+
+  async delete() {
+    await flushTransactions(this.address);
+    await Order.flush(this.address);
+    await Offer.flush(this.address);
   }
 }
 

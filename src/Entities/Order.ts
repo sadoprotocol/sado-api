@@ -4,21 +4,20 @@ import type { ObjectId, WithId } from "mongodb";
 import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
 import { getTypeMap } from "../Libraries/Response";
-import { getAddressVoutValue, parseLocation } from "../Libraries/Transaction";
+import { getAddressVoutValue, getUTXOState, parseLocation } from "../Libraries/Transaction";
 import {
-  InvalidOrderMakerException,
-  InvalidOwnerLocationException,
-  OrdinalNotFoundException,
-  OrdinalsMovedException,
-  VoutOutOfRangeException,
-} from "../Orderbook/Exceptions";
-import { getAskingPrice, getOrderOwner } from "../Orderbook/Utilities";
+  OrderFulfilledException,
+  OrderInvalidMaker,
+  OrderTransactionNotFound,
+  OrderVoutNotFound,
+} from "../Orderbook/Exceptions/OrderException";
+import { getAskingPrice } from "../Orderbook/Utilities";
 import { infura, IPFSOrder } from "../Services/Infura";
 import { lookup } from "../Services/Lookup";
 import { db } from "../Services/Mongo";
-import { addCollection } from "./Collections";
 import { Offer } from "./Offer";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
+import { getTransaction } from "./Transaction";
 
 const collection = db.collection<OrderDocument>("orders");
 
@@ -31,7 +30,7 @@ export class Order {
   /**
    * Status of the order.
    */
-  readonly status: OrderDocument["status"];
+  status: OrderDocument["status"];
 
   /**
    * Address to the orderbook where the order is placed.
@@ -55,12 +54,12 @@ export class Order {
    * Amount of satoshis that goes back to the orderbook address in which the order
    * is placed.
    */
-  readonly value?: number;
+  value?: number;
 
   /**
    * Metadata about the offers that has been made against this order.
    */
-  readonly offers: OrderOffers;
+  offers: OrderOffers;
 
   /**
    * Time details about the order and when it was created on the blockchain and
@@ -71,12 +70,12 @@ export class Order {
   /**
    * Vout containing the ordinals and inscription array.
    */
-  vout?: Vout;
+  readonly vout?: Vout;
 
   /**
    * Rejection details if the order has been rejected.
    */
-  readonly rejection?: any;
+  rejection?: any;
 
   constructor(document: WithId<OrderDocument>) {
     this._id = document._id;
@@ -92,14 +91,6 @@ export class Order {
   }
 
   /*
-   |--------------------------------------------------------------------------------
-   | Accessors
-   |--------------------------------------------------------------------------------
-   */
-
-  // ...
-
-  /*
   |--------------------------------------------------------------------------------
   | Factories
   |--------------------------------------------------------------------------------
@@ -111,7 +102,11 @@ export class Order {
       return;
     }
     await collection.insertOne(makePendingOrder(tx, order));
-    await addCollection(tx.from, order);
+  }
+
+  static async find(): Promise<Order[]> {
+    const documents = await collection.find().toArray();
+    return documents.map((document) => new Order(document));
   }
 
   static async getByAddress(address: string, network: Network): Promise<Order[]> {
@@ -131,23 +126,8 @@ export class Order {
     }
   }
 
-  /*
-  |--------------------------------------------------------------------------------
-  | Mutators
-  |--------------------------------------------------------------------------------
-  */
-
-  async setOffer(offer: Offer): Promise<void> {
-    await collection.updateOne(
-      {
-        "order.cid": offer.order.cid,
-        "offers.cids": { $ne: offer.offer.cid },
-      },
-      {
-        $inc: { "offers.count": 1 },
-        $push: { "offers.cids": offer.offer.cid },
-      }
-    );
+  static async flush(address: string): Promise<void> {
+    await collection.deleteMany({ address });
   }
 
   /*
@@ -158,72 +138,47 @@ export class Order {
 
   async resolve(): Promise<void> {
     try {
-      await this.#hasValidOwner();
-      await this.#hasCompleted();
-    } catch (err) {
-      await collection.updateOne({ _id: this._id }, { $set: { status: "rejected", rejection: err } });
-    }
-  }
+      await hasValidOwner(this.order.location, this.order.maker, this.tx.network);
 
-  async #hasValidOwner(): Promise<void> {
-    const owner = await getOrderOwner(this.order, this.tx.network);
-    if (owner === undefined) {
-      throw new InvalidOwnerLocationException(this.order.location);
-    }
-    if ((this.order.type === "sell" && owner === this.order.maker) === false) {
-      throw new InvalidOrderMakerException(this.order.type, owner, this.order.maker);
-    }
-  }
+      // ### Offers
+      // Update list of offers that has been made against this order.
 
-  async #hasCompleted(): Promise<void> {
-    const list = await Offer.getByOrderCID(this.order.cid);
+      const offers = await getOffers(this.order.cid);
+      await this.setOffers(offers);
 
-    // ### Set Offers Meta
+      // ### Taker
+      // Get the taker of the order if it has been fulfilled. If the order has not
+      // been fulfilled, the taker will be undefined.
 
-    await collection.updateOne(
-      {
-        _id: this._id,
-      },
-      {
-        $set: {
-          "offers.count": list.length,
-          "offers.cids": list.map((offer) => offer.offer.cid),
-        },
+      const taker = await getTaker(this.order.location, this.offers, this.tx.network);
+      if (taker !== undefined) {
+        await this.setCompleted(taker);
       }
-    );
-
-    // ### Offer Proof Check
-    // If order contains a connected offer with a valid proof the order is
-    // considered completed.
-
-    for (const offer of list) {
-      if (offer.status === "completed" && offer.proof !== undefined) {
-        return void collection.updateOne({ _id: this._id }, { $set: { status: "completed" } });
-      }
+    } catch (error) {
+      await this.setRejected(error);
     }
-
-    // ### Inscription Check
-    // Check if the inscription is still present on the expected transaction.
-    // If not then the order is rejected since the inscriptions has been
-    // moved independent of the order.
-
-    await this.#hasInscriptions();
   }
 
-  async #hasInscriptions(): Promise<void> {
-    const [txid, voutN] = parseLocation(this.order.location);
-    const tx = await lookup.transaction(txid, this.tx.network);
-    if (tx === undefined) {
-      throw new OrdinalNotFoundException(txid, voutN);
-    }
-    const vout = (this.vout = tx.vout.find((item) => item.n === voutN));
-    if (vout === undefined) {
-      throw new VoutOutOfRangeException(voutN);
-    }
-    if (vout.ordinals.length === 0) {
-      throw new OrdinalsMovedException();
-    }
-    await collection.updateOne({ _id: this._id }, { $set: { vout } });
+  /*
+  |--------------------------------------------------------------------------------
+  | Mutators
+  |--------------------------------------------------------------------------------
+  */
+
+  async setCompleted(taker: OrderTaker): Promise<void> {
+    await collection.updateOne({ _id: this._id }, { $set: { status: "completed", "offers.taker": taker } });
+    this.offers.taker = taker;
+  }
+
+  async setOffers(offers: OrderOffers): Promise<void> {
+    await collection.updateOne({ _id: this._id }, { $set: { offers } });
+    this.offers = offers;
+  }
+
+  async setRejected(rejection: any): Promise<void> {
+    await collection.updateOne({ _id: this._id }, { $set: { status: "rejected", rejection } });
+    this.status = "rejected";
+    this.rejection = rejection;
   }
 
   /*
@@ -267,6 +222,109 @@ export class Order {
 
 /*
  |--------------------------------------------------------------------------------
+ | Validators
+ |--------------------------------------------------------------------------------
+ */
+
+/**
+ * Check if the ordinal transaction is owned by the maker of the order.
+ *
+ * @param location - Location of the ordinal transaction.
+ * @param maker
+ * @param network
+ */
+async function hasValidOwner(location: string, maker: string, network: Network): Promise<void> {
+  const [txid, n] = parseLocation(location);
+
+  const tx = await getTransaction(txid, network);
+  if (tx === undefined) {
+    throw new OrderTransactionNotFound(location);
+  }
+
+  const vout = tx.vout[n];
+  if (vout === undefined) {
+    throw new OrderVoutNotFound(location);
+  }
+
+  if (vout.scriptPubKey.address !== maker) {
+    throw new OrderInvalidMaker(location);
+  }
+}
+
+/**
+ * Get offers that has been made for the order with the given CID.
+ *
+ * @param cid - Order CID to retrieve offers for.
+ *
+ * @returns List of offers made for the order.
+ */
+async function getOffers(cid: string): Promise<OrderOffers> {
+  const offers: OrderOffers = {
+    count: 0,
+    list: [],
+  };
+  const list = await Offer.getByOrderCID(cid);
+  for (const offer of list) {
+    offers.count += 1;
+    offers.list.push({
+      cid: offer.offer.cid,
+      taker: offer.offer.taker,
+    });
+  }
+  return offers;
+}
+
+/**
+ * Check if the order has been completed. If so then we can mark the order as
+ * completed.
+ *
+ * Check for completion by checking if the order has a confirmed offer taker
+ * and validate the spent state of the transaction location defined on the
+ * IPFS order.
+ *
+ * @param location - Location of the order ordinal transaction.
+ */
+async function getTaker(location: string, offers: OrderOffers, network: Network): Promise<OrderTaker | undefined> {
+  const [txid, voutN] = parseLocation(location);
+  const { address, spent } = await getUTXOState(txid, voutN, network);
+  if (spent === true) {
+    const tx = await getSpentTransaction(address, txid, network);
+    if (tx !== undefined) {
+      for (const utxo of tx.vout) {
+        const offer = offers.list.find((offer) => offer.taker === utxo.scriptPubKey.address);
+        if (offer !== undefined) {
+          await setCompletedOffer(offers, offer.taker);
+          return { address: offer.taker, location: `${tx.txid}:${utxo.n}` };
+        }
+      }
+    }
+  }
+}
+
+async function getSpentTransaction(address: string, txid: string, network: Network): Promise<Transaction | undefined> {
+  const txs = await lookup.transactions(address, network);
+  for (const tx of txs) {
+    for (const vin of tx.vin) {
+      if (vin.txid === txid) {
+        return tx;
+      }
+    }
+  }
+}
+
+async function setCompletedOffer(offers: OrderOffers, address: string): Promise<void> {
+  for (const { cid, taker } of offers.list) {
+    const offer = await Offer.getByOfferCID(cid);
+    if (taker === address) {
+      await offer?.setCompleted();
+    } else {
+      await offer?.setRejected(new OrderFulfilledException());
+    }
+  }
+}
+
+/*
+ |--------------------------------------------------------------------------------
  | Utilities
  |--------------------------------------------------------------------------------
  */
@@ -280,7 +338,7 @@ function makePendingOrder(tx: Transaction, order: IPFSOrder): OrderDocument {
     value: getAddressVoutValue(tx, tx.from),
     offers: {
       count: 0,
-      cids: [],
+      list: [],
     },
     time: {
       block: tx.blocktime,
@@ -331,5 +389,14 @@ type OrderTime = {
 
 type OrderOffers = {
   count: number;
-  cids: string[];
+  list: {
+    cid: string;
+    taker: string;
+  }[];
+  taker?: OrderTaker;
+};
+
+type OrderTaker = {
+  address: string;
+  location: string;
 };
