@@ -179,6 +179,7 @@ export class Order {
 
   async setVout(vout: Vout): Promise<void> {
     await collection.updateOne({ _id: this._id }, { $set: { vout } });
+    await Offer.setVout(this.order.cid, vout);
     this.vout = vout;
   }
 
@@ -302,7 +303,7 @@ async function getTaker(location: string, offers: OrderOffers, network: Network)
       for (const utxo of tx.vout) {
         const offer = offers.list.find((offer) => offer.taker === utxo.scriptPubKey.address);
         if (offer !== undefined) {
-          await setCompletedOffer(offers, offer.taker);
+          await setCompletedOffer(tx.txid, offers, offer.taker);
           return { address: offer.taker, location: `${tx.txid}:${utxo.n}` };
         }
       }
@@ -322,11 +323,11 @@ async function getSpentTransaction(address: string, txid: string, network: Netwo
   }
 }
 
-async function setCompletedOffer(offers: OrderOffers, address: string): Promise<void> {
+async function setCompletedOffer(txid: string, offers: OrderOffers, address: string): Promise<void> {
   for (const { cid, taker } of offers.list) {
     const offer = await Offer.getByOfferCID(cid);
     if (taker === address) {
-      await offer?.setCompleted();
+      await offer?.setCompleted(txid);
     } else {
       await offer?.setRejected(new OrderFulfilledException());
     }

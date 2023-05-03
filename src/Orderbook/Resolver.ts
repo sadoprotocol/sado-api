@@ -17,7 +17,7 @@ export async function resolveOrderbookTransactions(address: string, network: Net
   // ### Add Transaction
   // For any non-processed transaction in the address, add it to the database.
 
-  const limit = pLimit(10);
+  const limit = pLimit(4);
   const nextTxs = await addOrderbookTransactions(sadoTxs, address, network);
   await Promise.all(
     nextTxs.map((tx) =>
@@ -36,8 +36,8 @@ export async function resolveOrderbookTransactions(address: string, network: Net
   // Run through pending orders and offers, checking of changes and transitioning
   // their states as necessary.
 
-  await resolvePendingOffers(address, network);
   await resolvePendingOrders(address, network);
+  await resolvePendingOffers(address, network);
 }
 
 /*
@@ -46,16 +46,16 @@ export async function resolveOrderbookTransactions(address: string, network: Net
  |--------------------------------------------------------------------------------
  */
 
-async function resolvePendingOffers(address: string, network: Network): Promise<void> {
-  const limit = pLimit(10);
-  const pending = await Offer.getByStatus("pending", address, network);
-  await Promise.all(pending.map((offer) => limit(() => offer.resolve())));
-}
-
 async function resolvePendingOrders(address: string, network: Network): Promise<void> {
-  const limit = pLimit(10);
+  const limit = pLimit(4);
   const pending = await Order.getByStatus("pending", address, network);
   await Promise.all(pending.map((order) => limit(() => order.resolve())));
+}
+
+async function resolvePendingOffers(address: string, network: Network): Promise<void> {
+  const limit = pLimit(4);
+  const pending = await Offer.getByStatus("pending", address, network);
+  await Promise.all(pending.map((offer) => limit(() => offer.resolve())));
 }
 
 function getSadoTransactions(txs: Transaction[]): Transaction[] {

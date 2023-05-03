@@ -5,9 +5,11 @@ import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
 import { getAddressVoutValue, hasSignature } from "../Libraries/Transaction";
 import { OfferSignatureInvalid } from "../Orderbook/Exceptions/OfferException";
+import { OrderClosed } from "../Orderbook/Exceptions/OrderException";
 import { getAskingPrice } from "../Orderbook/Utilities";
 import { infura, IPFSOffer, IPFSOrder } from "../Services/Infura";
 import { db } from "../Services/Mongo";
+import { Order } from "./Order";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
 
 const collection = db.collection<OfferDocument>("offers");
@@ -60,17 +62,17 @@ export class Offer {
   /**
    * Vout containing the ordinals and inscription array.
    */
-  readonly vout?: Vout;
+  vout?: Vout;
 
   /**
    * Transaction txid of the transaction that proves the offer is valid.
    */
-  readonly proof?: string;
+  proof?: string;
 
   /**
    * Rejection details about the offer and why it was rejected.
    */
-  readonly rejection?: any;
+  rejection?: any;
 
   constructor(document: WithId<OfferDocument>) {
     this._id = document._id;
@@ -102,6 +104,10 @@ export class Offer {
       return;
     }
     await collection.insertOne(makePendingOffer(tx, order, offer));
+  }
+
+  static async setVout(cid: string, vout: Vout): Promise<void> {
+    await collection.updateOne({ "order.cid": cid }, { $set: { vout } });
   }
 
   static async getByAddress(address: string, network: Network): Promise<Offer[]> {
@@ -139,6 +145,7 @@ export class Offer {
   async resolve(): Promise<void> {
     try {
       await hasValidSignature(this.offer.offer);
+      await hasValidOrder(this.order.cid);
     } catch (error) {
       await this.setRejected(error);
     }
@@ -150,12 +157,14 @@ export class Offer {
    |--------------------------------------------------------------------------------
    */
 
-  async setCompleted(): Promise<void> {
-    await collection.updateOne({ _id: this._id }, { $set: { status: "completed" } });
+  async setCompleted(proof: string): Promise<void> {
+    await collection.updateOne({ _id: this._id }, { $set: { status: "completed", proof } });
+    this.proof = proof;
   }
 
   async setRejected(rejection: any): Promise<void> {
     await collection.updateOne({ _id: this._id }, { $set: { status: "rejected", rejection } });
+    this.rejection = rejection;
   }
 
   /*
@@ -211,6 +220,13 @@ export class Offer {
 async function hasValidSignature(offer: string): Promise<void> {
   if (hasSignature(offer) === false) {
     throw new OfferSignatureInvalid();
+  }
+}
+
+async function hasValidOrder(cid: string): Promise<void> {
+  const order = await Order.getByCID(cid);
+  if (order && order.status === "rejected") {
+    throw new OrderClosed();
   }
 }
 
