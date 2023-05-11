@@ -3,7 +3,7 @@ import fetch, { RequestInit } from "node-fetch";
 
 import { config } from "../Config";
 import { getTransaction, Inscription, Ordinal, ScriptPubKey, Transaction } from "../Entities/Transaction";
-import { Network } from "../Libraries/Network";
+import { DEFAULT_NETWORK, Network } from "../Libraries/Network";
 
 const log = debug("sado-lookup");
 
@@ -89,7 +89,7 @@ async function get(path: string, data: unknown, network: Network): Promise<any> 
     path = "/" + path;
   }
 
-  const url = config.lookupEndpoint.replace("regtest", network) + path;
+  const url = config.lookupEndpoint.replace(DEFAULT_NETWORK, network) + path;
   const requestObject: RequestInit = {
     method: "GET",
     headers: {

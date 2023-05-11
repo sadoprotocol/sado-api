@@ -1,8 +1,9 @@
 import { envToNumber, getEnvironmentVariable } from "./Libraries/Environment";
+import { DEFAULT_NETWORK } from "./Libraries/Network";
 
 export const config = {
   port: normalizePort(getEnvironmentVariable("PORT")),
-  lookupEndpoint: "https://regtest.ordit.io/utxo",
+  lookupEndpoint: `https://${DEFAULT_NETWORK}.ordit.io/utxo`,
   infuraGateway: getEnvironmentVariable("INFURA_GATEWAY"),
   oceanEndpoint: getEnvironmentVariable("OCEAN_ENDPOINT"),
   redis: {

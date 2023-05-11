@@ -156,6 +156,9 @@ export class Order {
         await this.setCompleted(taker);
       }
     } catch (error) {
+      if (error instanceof OrderTransactionNotFound) {
+        return; // TODO: Add better handling of this, as this can be because of a bad network lookup.
+      }
       await this.setRejected(error);
     }
   }
