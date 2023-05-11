@@ -14,11 +14,10 @@ import {
 } from "../Orderbook/Exceptions/OrderException";
 import { getAskingPrice } from "../Orderbook/Utilities";
 import { infura, IPFSOrder } from "../Services/Infura";
-import { lookup } from "../Services/Lookup";
+import { Lookup } from "../Services/Lookup";
 import { db } from "../Services/Mongo";
 import { Offer } from "./Offer";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
-import { getTransaction } from "./Transaction";
 
 const collection = db.collection<OrderDocument>("orders");
 
@@ -137,9 +136,9 @@ export class Order {
    |--------------------------------------------------------------------------------
    */
 
-  async resolve(): Promise<void> {
+  async resolve(lookup: Lookup): Promise<void> {
     try {
-      const vout = await getOrdinalVout(this.order.location, this.order.maker, this.tx.network);
+      const vout = await getOrdinalVout(this.order.location, this.order.maker, lookup);
       await this.setVout(vout);
 
       // ### Offers
@@ -152,7 +151,7 @@ export class Order {
       // Get the taker of the order if it has been fulfilled. If the order has not
       // been fulfilled, the taker will be undefined.
 
-      const taker = await getTaker(this.order.location, this.offers, this.tx.network);
+      const taker = await getTaker(this.order.location, this.offers, lookup);
       if (taker !== undefined) {
         await this.setCompleted(taker);
       }
@@ -241,10 +240,10 @@ export class Order {
  * @param maker
  * @param network
  */
-async function getOrdinalVout(location: string, maker: string, network: Network): Promise<Vout> {
+async function getOrdinalVout(location: string, maker: string, lookup: Lookup): Promise<Vout> {
   const [txid, n] = parseLocation(location);
 
-  const tx = await getTransaction(txid, network);
+  const tx = await lookup.getTransaction(txid);
   if (tx === undefined) {
     throw new OrderTransactionNotFound(location);
   }
@@ -294,11 +293,11 @@ async function getOffers(cid: string): Promise<OrderOffers> {
  *
  * @param location - Location of the order ordinal transaction.
  */
-async function getTaker(location: string, offers: OrderOffers, network: Network): Promise<OrderTaker | undefined> {
+async function getTaker(location: string, offers: OrderOffers, lookup: Lookup): Promise<OrderTaker | undefined> {
   const [txid, voutN] = parseLocation(location);
-  const { address, spent } = await getUTXOState(txid, voutN, network);
+  const { address, spent } = await getUTXOState(txid, voutN, lookup);
   if (spent === true) {
-    const tx = await getSpentTransaction(address, txid, network);
+    const tx = await getSpentTransaction(address, txid, lookup);
     if (tx !== undefined) {
       for (const utxo of tx.vout) {
         const offer = offers.list.find((offer) => offer.taker === utxo.scriptPubKey.address);
@@ -312,8 +311,8 @@ async function getTaker(location: string, offers: OrderOffers, network: Network)
   }
 }
 
-async function getSpentTransaction(address: string, txid: string, network: Network): Promise<Transaction | undefined> {
-  const txs = await lookup.transactions(address, network);
+async function getSpentTransaction(address: string, txid: string, lookup: Lookup): Promise<Transaction | undefined> {
+  const txs = await lookup.getTransactions(address);
   for (const tx of txs) {
     for (const vin of tx.vin) {
       if (vin.txid === txid) {

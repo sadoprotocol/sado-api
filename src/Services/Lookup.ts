@@ -2,56 +2,85 @@ import debug from "debug";
 import fetch, { RequestInit } from "node-fetch";
 
 import { config } from "../Config";
-import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Entities/Transaction";
+import { getTransaction, Inscription, Ordinal, ScriptPubKey, Transaction } from "../Entities/Transaction";
 import { Network } from "../Libraries/Network";
 
 const log = debug("sado-lookup");
 
-export const lookup = {
-  transactions,
-  transaction,
-  balance,
-  unspents,
-  inscriptions,
-};
+export class Lookup {
+  readonly balances = new Map<string, Balance>();
+  readonly unspents = new Map<string, Unspent[]>();
+  readonly inscriptions = new Map<string, Inscription[]>();
+  readonly transactions = new Map<string, Transaction>();
+  readonly address = new Map<string, Transaction[]>();
+
+  constructor(readonly network: Network) {}
+
+  async getBalance(address: string): Promise<Balance | undefined> {
+    const cachedBalance = this.balances.get(address);
+    if (cachedBalance) {
+      return cachedBalance;
+    }
+    const balance = await get("/balance", { address }, this.network);
+    if (balance !== undefined) {
+      this.balances.set(address, balance);
+    }
+    return balance;
+  }
+
+  async getUnspents(address: string): Promise<Unspent[]> {
+    const cachedUnspents = await this.unspents.get(address);
+    if (cachedUnspents !== undefined) {
+      return cachedUnspents;
+    }
+    const unspents = await get("/unspents", { address }, this.network);
+    if (unspents === undefined) {
+      return [];
+    }
+    this.unspents.set(address, unspents);
+    return unspents;
+  }
+
+  async getInscriptions(outpoint: string): Promise<Inscription[]> {
+    const cachedInscriptions = this.inscriptions.get(outpoint);
+    if (cachedInscriptions) {
+      return cachedInscriptions;
+    }
+    const inscriptions = await get("/inscriptions", { outpoint }, this.network);
+    if (inscriptions !== undefined) {
+      this.inscriptions.set(outpoint, inscriptions);
+    }
+    return inscriptions;
+  }
+
+  async getTransaction(txid: string): Promise<Transaction | undefined> {
+    const cachedTx = this.transactions.get(txid);
+    if (cachedTx) {
+      return cachedTx;
+    }
+    const tx = (await getTransaction(txid, this.network)) ?? (await get("/transaction", { txid }, this.network));
+    if (tx !== undefined) {
+      this.transactions.set(txid, tx);
+    }
+    return tx;
+  }
+
+  async getTransactions(address: string): Promise<Transaction[]> {
+    const cachedTxs = this.address.get(address);
+    if (cachedTxs) {
+      return cachedTxs;
+    }
+    const txs = await get("/transactions", { address }, this.network);
+    if (txs !== undefined) {
+      this.address.set(address, txs);
+    }
+    return txs ?? [];
+  }
+}
 
 /*
  |--------------------------------------------------------------------------------
- | Service Methods
- |--------------------------------------------------------------------------------
- */
-
-async function transactions(address: string, network: Network): Promise<Transaction[]> {
-  const txs = await get("/transactions", { address }, network);
-  if (txs === undefined) {
-    return [];
-  }
-  return txs;
-}
-
-async function transaction(txid: string, network: Network): Promise<Transaction | undefined> {
-  return get("/transaction", { txid }, network);
-}
-
-async function balance(address: string, network: Network): Promise<Balance | undefined> {
-  return get("/balance", { address }, network);
-}
-
-async function unspents(address: string, network: Network): Promise<Unspent[]> {
-  const unspents = await get("/unspents", { address }, network);
-  if (unspents === undefined) {
-    return [];
-  }
-  return unspents;
-}
-
-async function inscriptions(outpoint: string, network: Network): Promise<Inscription[]> {
-  return get("/inscriptions", { outpoint }, network);
-}
-
-/*
- |--------------------------------------------------------------------------------
- | Utilities
+ | Request Handler
  |--------------------------------------------------------------------------------
  */
 

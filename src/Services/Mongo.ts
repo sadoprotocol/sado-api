@@ -25,9 +25,7 @@ async function connect() {
     })
     .catch(() => {
       log("client connection failed. Retrying...");
-      setTimeout(() => {
-        connect();
-      });
+      setTimeout(connect, 1000);
     });
 }
 

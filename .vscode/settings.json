@@ -8,36 +8,5 @@
     {
       "mode": "auto"
     }
-  ],
-  "cSpell.words": [
-    "appleboy",
-    "bech32",
-    "bitcoinjs",
-    "blockhash",
-    "blocktime",
-    "btcjs",
-    "cids",
-    "dexprices",
-    "easingthemes",
-    "ipfs",
-    "locktime",
-    "mrkdwn",
-    "orderbooks",
-    "ordit",
-    "p2wpkh",
-    "poolpairs",
-    "psbt",
-    "regtest",
-    "sado",
-    "satoshi",
-    "satoshis",
-    "slackapi",
-    "txid",
-    "txinwitness",
-    "unspents",
-    "utxo",
-    "vout",
-    "vsize",
-    "webfactory"
   ]
 }

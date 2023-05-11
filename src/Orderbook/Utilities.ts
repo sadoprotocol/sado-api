@@ -1,10 +1,9 @@
-import { getTransaction, Transaction } from "../Entities/Transaction";
+import { Transaction } from "../Entities/Transaction";
 import { BTC_TO_SAT } from "../Libraries/Bitcoin";
-import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
 import { parseLocation } from "../Libraries/Transaction";
 import { IPFSOffer, IPFSOrder } from "../Services/Infura";
-import { lookup } from "../Services/Lookup";
+import { Lookup } from "../Services/Lookup";
 
 /**
  * Get order item from a vout scriptPubKey utf8 string.
@@ -36,13 +35,13 @@ export function parseSado(utf8?: string):
  * transaction of the sado and the vout is the position of the owner address.
  *
  * @param location - Location of the sado transaction.
- * @param network  - Network to lookup transaction on.
+ * @param lookup   - Lookup service to get transaction from.
  *
  * @returns Address of the owner or `undefined` if no owner is found.
  */
-export async function getOrderOwner(order: IPFSOrder, network: Network): Promise<string | undefined> {
+export async function getOrderOwner(order: IPFSOrder, lookup: Lookup): Promise<string | undefined> {
   const [txid, vout] = parseLocation(order.location);
-  const tx = await getTransaction(txid, network);
+  const tx = await lookup.getTransaction(txid);
   if (tx === undefined) {
     return undefined;
   }
@@ -84,10 +83,10 @@ export function getAskingPrice(order: IPFSOrder): number {
 /**
  * Get confirmed transaction from takers list of transactions.
  *
- * @param txid    - Order location transaction id.
- * @param order   - Order which the offer is based on.
- * @param offer   - Offer to get transaction for.
- * @param network - Network to lookup transaction on.
+ * @param txid   - Order location transaction id.
+ * @param order  - Order which the offer is based on.
+ * @param offer  - Offer to get transaction for.
+ * @param lookup - Lookup service to get transactions from.
  *
  * @returns Transaction if found, undefined otherwise.
  */
@@ -95,9 +94,9 @@ export async function getTakerTransaction(
   txid: string,
   order: IPFSOrder,
   offer: IPFSOffer,
-  network: Network
+  lookup: Lookup
 ): Promise<Transaction | undefined> {
-  const txs = await lookup.transactions(offer.taker, network);
+  const txs = await lookup.getTransactions(offer.taker);
   for (const tx of txs) {
     for (const vin of tx.vin) {
       const value = getAskingPrice(order);
