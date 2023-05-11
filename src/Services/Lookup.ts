@@ -33,7 +33,7 @@ export class Lookup {
     if (cachedUnspents !== undefined) {
       return cachedUnspents;
     }
-    const unspents = await get("/unspents", { address }, this.network);
+    const unspents = await get("/unspents", { address, options: { noord: true } }, this.network);
     if (unspents === undefined) {
       return [];
     }
