@@ -6,7 +6,9 @@ PORT=3030
 
 MONGODB_NAME=sado
 MONGODB_URI=mongodb://localhost:27017
-REDIS_URL=redis://localhost:6379
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
 
 # IPFS
 

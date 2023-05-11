@@ -1,5 +1,6 @@
+import { WithId } from "mongodb";
+
 import { Network } from "../Libraries/Network";
-import { lookup } from "../Services/Lookup";
 import { db } from "../Services/Mongo";
 
 export const collection = db.collection<Transaction>("transactions");
@@ -73,14 +74,10 @@ export async function addTransaction(tx: Transaction, network: Network): Promise
  *
  * @returns The transaction if found, otherwise undefined.
  */
-export async function getTransaction(txid: string, network: Network): Promise<Transaction | undefined> {
+export async function getTransaction(txid: string, network: Network): Promise<WithId<Transaction> | undefined> {
   const tx = await collection.findOne({ txid, network });
   if (tx === null) {
-    const rtx = await lookup.transaction(txid, network);
-    if (rtx === undefined) {
-      return undefined;
-    }
-    return addTransaction(rtx, network);
+    return undefined;
   }
   return tx;
 }

@@ -1,12 +1,16 @@
-import Queue from "bull";
-import debug from "debug";
+import { Queue } from "bullmq";
 
-import { config } from "../Config";
-import { Network } from "../Libraries/Network";
-import { resolveOrderbookTransactions } from "./Resolver";
+import { Network } from "../../Libraries/Network";
+import { connection } from "./Connection";
+import { WORKER_NAME } from "./Worker";
 
-const log = debug("sado-orderbook-monitor");
-const queue = new Queue("orderbook", config.redisUrl);
+const PRIORITIES = {
+  mainnet: 10,
+  testnet: 7,
+  regtest: 5,
+} as const;
+
+const queue = new Queue("orderbook", { connection });
 
 export async function isMonitoring(address: string, network: Network): Promise<boolean> {
   const jobId = getJobId(address, network);
@@ -21,12 +25,15 @@ export async function isMonitoring(address: string, network: Network): Promise<b
 export function monitorAddress(address: string, network: Network) {
   const jobId = getJobId(address, network);
   queue.add(
+    WORKER_NAME,
     { address, network },
     {
       jobId,
+      priority: PRIORITIES[network],
       repeat: {
         every: 1000 * 60 * 5, // 5 minutes
       },
+      removeOnFail: true,
       removeOnComplete: true,
     }
   );
@@ -35,9 +42,3 @@ export function monitorAddress(address: string, network: Network) {
 function getJobId(address: string, network: Network) {
   return `${network}-${address}`;
 }
-
-queue.process(async ({ data: { address, network } }) => {
-  log(`${network}: Resolving Orderbook ${address}`);
-  await resolveOrderbookTransactions(address, network);
-  log(`${network}: Resolved Orderbook ${address}`);
-});

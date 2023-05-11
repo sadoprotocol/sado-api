@@ -1,11 +1,14 @@
-import { getEnvironmentVariable } from "./Libraries/Environment";
+import { envToNumber, getEnvironmentVariable } from "./Libraries/Environment";
 
 export const config = {
   port: normalizePort(getEnvironmentVariable("PORT")),
   lookupEndpoint: "https://regtest.ordit.io/utxo",
   infuraGateway: getEnvironmentVariable("INFURA_GATEWAY"),
   oceanEndpoint: getEnvironmentVariable("OCEAN_ENDPOINT"),
-  redisUrl: getEnvironmentVariable("REDIS_URL"),
+  redis: {
+    host: getEnvironmentVariable("REDIS_HOST"),
+    port: getEnvironmentVariable("REDIS_PORT", envToNumber),
+  },
   mongo: {
     name: getEnvironmentVariable("MONGODB_NAME"),
     uri: getEnvironmentVariable("MONGODB_URI"),

@@ -6,7 +6,7 @@ import { flushTransactions } from "../Entities/Transaction";
 import { Network } from "../Libraries/Network";
 import { OffersAnalytics } from "./Analytics/OffersAnalytics";
 import { OrdersAnalytics } from "./Analytics/OrdersAnalytics";
-import { isMonitoring, monitorAddress } from "./Monitor";
+import { isMonitoring, monitorAddress } from "./Monitor/Queue";
 import { resolveOrderbookTransactions } from "./Resolver";
 
 const log = debug("sado-orderbook");

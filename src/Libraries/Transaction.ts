@@ -1,9 +1,8 @@
 import * as btc from "bitcoinjs-lib";
 
-import { getTransaction, Transaction, Vout } from "../Entities/Transaction";
-import { lookup } from "../Services/Lookup";
+import { Transaction, Vout } from "../Entities/Transaction";
+import { Lookup } from "../Services/Lookup";
 import { BTC_TO_SAT } from "./Bitcoin";
-import { Network } from "./Network";
 
 /**
  * Check if a UTXO on a transaction is spent.
@@ -17,12 +16,12 @@ import { Network } from "./Network";
 export async function getUTXOState(
   txid: string,
   n: number,
-  network: Network
+  lookup: Lookup
 ): Promise<{
   address: string;
   spent: boolean;
 }> {
-  const tx = await getTransaction(txid, network);
+  const tx = await lookup.getTransaction(txid);
   if (tx === undefined) {
     throw new Error(`Transaction ${txid} not found.`);
   }
@@ -31,7 +30,7 @@ export async function getUTXOState(
     throw new Error(`Vout ${txid}.vout[${n}] not found.`);
   }
   const address = vout.scriptPubKey.address;
-  const txs = await lookup.unspents(address, network);
+  const txs = await lookup.getUnspents(address);
   for (const tx of txs) {
     if (tx.txid === txid) {
       return { address, spent: false };
