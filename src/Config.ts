@@ -14,6 +14,7 @@ export const config = {
     name: getEnvironmentVariable("MONGODB_NAME"),
     uri: getEnvironmentVariable("MONGODB_URI"),
   },
+  slack: getEnvironmentVariable("SLACK_WEBHOOK_URL"),
 };
 
 function normalizePort(val: string): number | string | boolean {

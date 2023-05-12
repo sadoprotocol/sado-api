@@ -39,6 +39,7 @@ function collection<T extends Document>(name: string) {
 }
 
 async function createIndexes() {
+  await collection("notifications").createIndex({ cid: 1 }, { unique: true });
   await collection("transactions").createIndex({ txid: 1 }, { unique: true });
   await collection("orders").createIndex({ address: 1 });
   await collection("offers").createIndex({ address: 1 });

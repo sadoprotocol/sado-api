@@ -96,17 +96,27 @@ export class Order {
   |--------------------------------------------------------------------------------
   */
 
-  static async insert(tx: Transaction): Promise<void> {
+  static async insert(tx: Transaction): Promise<Order | undefined> {
     const order = await infura.getOrder(tx.cid);
     if ("error" in order) {
       return;
     }
-    await collection.insertOne(makePendingOrder(tx, order));
+    const result = await collection.insertOne(makePendingOrder(tx, order));
+    if (result.acknowledged === true) {
+      return this.findById(result.insertedId);
+    }
   }
 
   static async find(): Promise<Order[]> {
     const documents = await collection.find().toArray();
     return documents.map((document) => new Order(document));
+  }
+
+  static async findById(_id: ObjectId): Promise<Order | undefined> {
+    const document = await collection.findOne({ _id });
+    if (document !== null) {
+      return new Order(document);
+    }
   }
 
   static async getByAddress(address: string, network: Network): Promise<Order[]> {
@@ -128,6 +138,18 @@ export class Order {
 
   static async flush(address: string): Promise<void> {
     await collection.deleteMany({ address });
+  }
+
+  /*
+   |--------------------------------------------------------------------------------
+   | Methods
+   |--------------------------------------------------------------------------------
+   */
+
+  async getInscriptions(lookup: Lookup): Promise<Inscription[]> {
+    return getOrdinalVout(this.order.location, this.order.maker, lookup)
+      .then((vout) => vout.inscriptions)
+      .catch(() => []);
   }
 
   /*
@@ -240,8 +262,8 @@ export class Order {
  * Check if the ordinal transaction is owned by the maker of the order.
  *
  * @param location - Location of the ordinal transaction.
- * @param maker
- * @param network
+ * @param maker    - Address of the maker of the order.
+ * @param lookup   - Lookup instance to use for network lookups.
  */
 async function getOrdinalVout(location: string, maker: string, lookup: Lookup): Promise<Vout> {
   const [txid, n] = parseLocation(location);

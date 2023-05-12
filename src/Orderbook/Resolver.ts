@@ -1,10 +1,9 @@
-import pLimit from "p-limit";
-
 import { Offer } from "../Entities/Offer";
 import { Order } from "../Entities/Order";
 import { addOrderbookTransactions, Transaction } from "../Entities/Transaction";
 import { Network } from "../Libraries/Network";
 import { Lookup } from "../Services/Lookup";
+import { sendOrderNotification } from "../Services/Notification";
 import { parseSado } from "./Utilities";
 
 export async function resolveOrderbookTransactions(address: string, network: Network): Promise<void> {
@@ -19,19 +18,16 @@ export async function resolveOrderbookTransactions(address: string, network: Net
   // ### Add Transactions
   // For any non-processed transactions in the address, add them to the database.
 
-  const limit = pLimit(4);
   const nextTxs = await addOrderbookTransactions(sadoTxs, address, network);
-  await Promise.all(
-    nextTxs.map((tx) =>
-      limit(() => {
-        if (tx.type === "order") {
-          return Order.insert(tx);
-        }
-        if (tx.type === "offer") {
-          return Offer.insert(tx);
-        }
-      })
-    )
+  const result = await Promise.all(
+    nextTxs.map((tx) => {
+      if (tx.type === "order") {
+        return Order.insert(tx);
+      }
+      if (tx.type === "offer") {
+        return Offer.insert(tx);
+      }
+    })
   );
 
   // ### Resolve Pending
@@ -40,6 +36,19 @@ export async function resolveOrderbookTransactions(address: string, network: Net
 
   await resolvePendingOrders(address, lookup);
   await resolvePendingOffers(address, lookup);
+
+  // ### Notify
+  // Loop through new orders and offers and send notifications for them.
+  // For now we only do this on mainnet to avoid spamming the Slack channel which
+  // is for mainnet only at this time.
+
+  if (lookup.network === "mainnet") {
+    for (const item of result) {
+      if (item instanceof Order) {
+        await sendOrderNotification(item, lookup);
+      }
+    }
+  }
 }
 
 /*
