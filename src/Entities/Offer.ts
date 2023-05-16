@@ -120,7 +120,7 @@ export class Offer {
   }
 
   static async setVout(cid: string, vout: Vout): Promise<void> {
-    await collection.updateOne({ "order.cid": cid }, { $set: { vout } });
+    await collection.updateMany({ "order.cid": cid }, { $set: { vout } });
   }
 
   static async getByAddress(address: string, network: Network): Promise<Offer[]> {
