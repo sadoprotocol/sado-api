@@ -234,6 +234,11 @@ export type IPFSOffer = {
   offer: string;
 
   /**
+   * Format in which the offer is encoded.
+   */
+  offer_format?: string;
+
+  /**
    * Address of the taker correlating to key used in signature.
    *
    * For a offer to be valid it needs to be signed by the taker before
@@ -244,7 +249,7 @@ export type IPFSOffer = {
   /**
    * Signature of signing the JSON string with the takers private key.
    */
-  signature: string;
+  signature?: string;
 
   /**
    * Descriptor for BECH32 addresses.
