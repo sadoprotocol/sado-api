@@ -17,3 +17,7 @@ INFURA_GATEWAY=https://sado.infura-ipfs.io
 # Ocean
 
 OCEAN_ENDPOINT=https://ocean.defichain.com/v0/mainnet
+
+# Slack
+
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX

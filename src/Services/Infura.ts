@@ -15,7 +15,7 @@ const FETCH_REQUEST_DEFAULTS = {
 };
 
 const hasValidOrderKeys = makeObjectKeyChecker(["ts", "type", "maker", "location", "signature"]);
-const hasValidOfferKeys = makeObjectKeyChecker(["ts", "origin", "taker", "offer", "signature"]);
+const hasValidOfferKeys = makeObjectKeyChecker(["ts", "origin", "taker", "offer"]);
 
 /*
  |--------------------------------------------------------------------------------
