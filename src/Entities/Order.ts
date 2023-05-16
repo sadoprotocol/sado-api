@@ -5,6 +5,7 @@ import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
 import { getTypeMap } from "../Libraries/Response";
 import { getAddressVoutValue, getUTXOState, parseLocation } from "../Libraries/Transaction";
+import { IPFSLookupFailed } from "../Orderbook/Exceptions/GeneralExceptions";
 import {
   OrderFulfilledException,
   OrderInvalidMaker,
@@ -99,6 +100,7 @@ export class Order {
   static async insert(tx: Transaction): Promise<Order | undefined> {
     const order = await infura.getOrder(tx.cid);
     if ("error" in order) {
+      await collection.insertOne(makeRejectedOrder(tx, new IPFSLookupFailed(tx.txid, order.error, order.data)));
       return;
     }
     const result = await collection.insertOne(makePendingOrder(tx, order));
@@ -380,6 +382,26 @@ function makePendingOrder(tx: Transaction, order: IPFSOrder): OrderDocument {
       order: order.ts,
     },
     tx,
+  };
+}
+
+function makeRejectedOrder(tx: Transaction, rejection: any, order?: IPFSOrder): any {
+  return {
+    status: "rejected",
+    address: tx.from,
+    network: tx.network,
+    order,
+    value: getAddressVoutValue(tx, tx.from),
+    offers: {
+      count: 0,
+      list: [],
+    },
+    time: {
+      block: tx.blocktime,
+      order: 0,
+    },
+    tx,
+    rejection,
   };
 }
 

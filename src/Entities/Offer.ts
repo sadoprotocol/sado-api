@@ -4,11 +4,8 @@ import type { ObjectId, WithId } from "mongodb";
 import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
 import { getAddressVoutValue, hasSignature } from "../Libraries/Transaction";
-import {
-  OfferIPFSOfferRejected,
-  OfferIPFSOrderRejected,
-  OfferSignatureInvalid,
-} from "../Orderbook/Exceptions/OfferException";
+import { IPFSLookupFailed } from "../Orderbook/Exceptions/GeneralExceptions";
+import { OfferSignatureInvalid } from "../Orderbook/Exceptions/OfferException";
 import { OrderClosed } from "../Orderbook/Exceptions/OrderException";
 import { getAskingPrice } from "../Orderbook/Utilities";
 import { infura, IPFSOffer, IPFSOrder } from "../Services/Infura";
@@ -101,12 +98,12 @@ export class Offer {
   static async insert(tx: Transaction): Promise<Offer | undefined> {
     const offer = await infura.getOffer(tx.cid);
     if ("error" in offer) {
-      await collection.insertOne(makeRejectedOffer(tx, new OfferIPFSOfferRejected(tx.txid, tx.cid)));
+      await collection.insertOne(makeRejectedOffer(tx, new IPFSLookupFailed(tx.txid, offer.error, offer.data)));
       return;
     }
     const order = await infura.getOrder(offer.origin);
     if ("error" in order) {
-      await collection.insertOne(makeRejectedOffer(tx, new OfferIPFSOrderRejected(tx.txid, offer.origin), offer));
+      await collection.insertOne(makeRejectedOffer(tx, new IPFSLookupFailed(tx.txid, order.error, order.data), offer));
       return;
     }
     const result = await collection.insertOne(makePendingOffer(tx, order, offer));
@@ -254,9 +251,9 @@ async function hasValidOrder(cid: string): Promise<void> {
 
 function makePendingOffer(tx: Transaction, order: IPFSOrder, offer: IPFSOffer): OfferDocument {
   return {
+    status: "pending",
     address: tx.from,
     network: tx.network,
-    status: "pending",
     order,
     offer,
     value: getAddressVoutValue(tx, tx.from),
@@ -270,9 +267,9 @@ function makePendingOffer(tx: Transaction, order: IPFSOrder, offer: IPFSOffer): 
 
 function makeRejectedOffer(tx: Transaction, rejection: any, offer?: IPFSOffer): any {
   return {
+    status: "rejected",
     address: tx.from,
     network: tx.network,
-    status: "pending",
     offer,
     value: getAddressVoutValue(tx, tx.from),
     time: {
