@@ -1,4 +1,3 @@
-import * as btc from "bitcoinjs-lib";
 import moment from "moment";
 import type { ObjectId, WithId } from "mongodb";
 
@@ -6,13 +5,10 @@ import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
 import { getAddressVoutValue } from "../Libraries/Transaction";
 import { IPFSLookupFailed } from "../Orderbook/Exceptions/GeneralExceptions";
-import { OfferValidationFailed } from "../Orderbook/Exceptions/OfferException";
-import { OrderClosed } from "../Orderbook/Exceptions/OrderException";
 import { getAskingPrice } from "../Orderbook/Utilities";
 import { validator } from "../Orderbook/Validator";
 import { infura, IPFSOffer, IPFSOrder } from "../Services/Infura";
 import { db } from "../Services/Mongo";
-import { Order } from "./Order";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
 
 const collection = db.collection<OfferDocument>("offers");
@@ -159,10 +155,8 @@ export class Offer {
 
   async resolve(): Promise<void> {
     try {
-      await hasValidOrder(this.order.cid);
-      await hasValidOffer(this.offer, this.order);
+      await validator.offer.validate(this.offer, this.order);
     } catch (error) {
-      console.log({ error });
       await this.setRejected(error);
     }
   }
@@ -225,54 +219,6 @@ export class Offer {
 
     return response;
   }
-}
-
-/*
- |--------------------------------------------------------------------------------
- | Validators
- |--------------------------------------------------------------------------------
- */
-
-async function hasValidOrder(cid: string): Promise<void> {
-  const order = await Order.getByCID(cid);
-  if (order && order.status === "rejected") {
-    throw new OrderClosed();
-  }
-}
-
-async function hasValidOffer(offer: IPFSOffer, order: IPFSOrder): Promise<void> {
-  const isValidated = validator.offer.format.psbt(offer, order);
-  if (isValidated === false) {
-    hasValidRawTransaction(offer);
-  }
-}
-
-/**
- * Check if the provided raw transaction hex has a signature.
- *
- * [TODO] Add the possibility to check if the owner/maker/taker of the transaction
- *        is the signer. I have done some preliminary work on this, but it is not
- *        complete and needs more discovery.
- *
- *        Initially tried to extract the address from the publicKeyHash value of
- *        the `script`. But since the `script` cannot be guaranteed to have this
- *        information it is not a reliable way to verify the signer.
- *
- * @param value  - Encoded transaction.
- * @param format - Format of the raw transaction hex string.
- *
- * @returns `true` if a signature exists in the inputs of the transaction.
- */
-async function hasValidRawTransaction({ offer }: IPFSOffer): Promise<void> {
-  try {
-    const tx = btc.Transaction.fromHex(offer);
-    for (const input of tx.ins) {
-      if (input.script.toString()) {
-        return;
-      }
-    }
-  } catch (err) {}
-  throw new OfferValidationFailed("Unable to verify offer validity", { offer });
 }
 
 /*

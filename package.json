@@ -10,7 +10,7 @@
     "lint": "eslint --ext .ts src"
   },
   "dependencies": {
-    "bitcoinjs-lib": "5.1.2",
+    "bitcoinjs-lib": "6.1.0",
     "bullmq": "^3.13.3",
     "cookie-parser": "~1.4.6",
     "debug": "~4.3.4",

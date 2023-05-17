@@ -3,7 +3,7 @@ import { Order } from "../Entities/Order";
 import { addOrderbookTransactions, Transaction } from "../Entities/Transaction";
 import { Network } from "../Libraries/Network";
 import { Lookup } from "../Services/Lookup";
-import { sendOrderNotification } from "../Services/Notification";
+import { sendOfferNotification, sendOrderNotification } from "../Services/Notification";
 import { parseSado } from "./Utilities";
 
 export async function resolveOrderbookTransactions(address: string, network: Network): Promise<void> {
@@ -44,8 +44,11 @@ export async function resolveOrderbookTransactions(address: string, network: Net
 
   if (lookup.network === "mainnet") {
     for (const item of result) {
-      if (item instanceof Order) {
-        await sendOrderNotification(item, lookup);
+      if (item instanceof Order && item.status === "pending") {
+        await sendOrderNotification(item);
+      }
+      if (item instanceof Offer && item.status === "pending") {
+        await sendOfferNotification(item);
       }
     }
   }
