@@ -40,7 +40,7 @@ export async function sendOrderNotification({ order }: Order) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*${order.meta?.name ?? "Unnamed"}*\n<https://sado.infura-ipfs.io/ipfs/${order.cid}|View Order>`,
+              text: `*${order.meta?.name ?? "Unnamed"}*\n<${config.ipfsGateway}/ipfs/${order.cid}|View Order>`,
             },
           },
         ],
@@ -76,14 +76,14 @@ export async function sendOfferNotification({ offer, order }: Offer) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `A new offer was just added for <https://sado.infura-ipfs.io/ipfs/${order.cid}|order>.`,
+              text: `A new offer was just added for <${config.ipfsGateway}/ipfs/${order.cid}|order>.`,
             },
           },
           {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*${order.meta?.name ?? "Unnamed"}*\n<https://sado.infura-ipfs.io/ipfs/${offer.cid}|View Offer>`,
+              text: `*${order.meta?.name ?? "Unnamed"}*\n<${config.ipfsGateway}/ipfs/${offer.cid}|View Offer>`,
             },
           },
         ],

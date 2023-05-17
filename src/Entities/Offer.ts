@@ -7,8 +7,9 @@ import { getAddressVoutValue } from "../Libraries/Transaction";
 import { IPFSLookupFailed } from "../Orderbook/Exceptions/GeneralExceptions";
 import { getAskingPrice } from "../Orderbook/Utilities";
 import { validator } from "../Orderbook/Validator";
-import { infura, IPFSOffer, IPFSOrder } from "../Services/Infura";
+import { ipfs } from "../Services/IPFS";
 import { db } from "../Services/Mongo";
+import { IPFSOffer, IPFSOrder } from "./IPFS";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
 
 const collection = db.collection<OfferDocument>("offers");
@@ -94,12 +95,12 @@ export class Offer {
   */
 
   static async insert(tx: Transaction): Promise<Offer | undefined> {
-    const offer = await infura.getOffer(tx.cid);
+    const offer = await ipfs.getOffer(tx.cid);
     if ("error" in offer) {
       await collection.insertOne(makeRejectedOffer(tx, new IPFSLookupFailed(tx.txid, offer.error, offer.data)));
       return;
     }
-    const order = await infura.getOrder(offer.origin);
+    const order = await ipfs.getOrder(offer.origin);
     if ("error" in order) {
       await collection.insertOne(makeRejectedOffer(tx, new IPFSLookupFailed(tx.txid, order.error, order.data), offer));
       return;

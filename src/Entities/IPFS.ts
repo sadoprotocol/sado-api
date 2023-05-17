@@ -1,97 +1,33 @@
-import debug from "debug";
-import fetch from "node-fetch";
+import { db } from "../Services/Mongo";
 
-import { config } from "../Config";
-import { makeObjectKeyChecker } from "../Libraries/Object";
-
-const log = debug("sado-infura");
-
-const FETCH_REQUEST_DEFAULTS = {
-  method: "GET",
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  },
-};
-
-const hasValidOrderKeys = makeObjectKeyChecker(["ts", "type", "maker", "location", "signature"]);
-const hasValidOfferKeys = makeObjectKeyChecker(["ts", "origin", "taker", "offer"]);
+export const collection = db.collection<IPFSDocument>("ipfs");
 
 /*
  |--------------------------------------------------------------------------------
- | Infura
+ | Methods
  |--------------------------------------------------------------------------------
  */
 
-export const infura = {
-  getOrder,
-  getOffer,
-};
-
-/*
- |--------------------------------------------------------------------------------
- | Service Methods
- |--------------------------------------------------------------------------------
- */
-
-async function getOrder(cid: string): Promise<InfuraResponse<IPFSOrder>> {
-  const data = await get<IPFSOrder>(cid);
-  if (data === undefined) {
-    return errorResponse(`Order CID '${cid}' not found`);
-  }
-  if (hasValidOrderKeys(data) === false) {
-    return errorResponse<IPFSOrder>(`Malformed CID '${cid}', order missing required keys`, data);
-  }
-  data.cid = cid;
-  return successResponse(data);
+export async function setIPFS(document: IPFSDocument): Promise<void> {
+  await collection.insertOne(document);
 }
 
-async function getOffer(cid: string): Promise<InfuraResponse<IPFSOffer>> {
-  const data = await get<IPFSOffer>(cid);
-  if (data === undefined) {
-    return errorResponse(`Offer CID '${cid}' not found`);
+export async function getIPFS(cid: string): Promise<IPFSDocument | undefined> {
+  const document = await collection.findOne({ cid });
+  if (document === null) {
+    return undefined;
   }
-  if (hasValidOfferKeys(data) === false) {
-    return errorResponse<IPFSOffer>(`Malformed CID '${cid}', offer missing required keys`, data);
-  }
-  data.cid = cid;
-  return successResponse(data);
+  delete (document as any)._id;
+  return document;
 }
 
 /*
  |--------------------------------------------------------------------------------
- | Utilities
+ | Document
  |--------------------------------------------------------------------------------
  */
 
-async function get<Data extends IPFSOrder | IPFSOffer>(cid: string): Promise<Data | undefined> {
-  log("Fetching CID '%s'", cid);
-  const response = await fetch(config.infuraGateway + "/ipfs/" + cid, FETCH_REQUEST_DEFAULTS);
-  if (response.status === 200) {
-    return response.json();
-  }
-}
-
-function successResponse<Data extends IPFSOrder | IPFSOffer>(data: Data): InfuraResponse<Data> {
-  return data;
-}
-
-function errorResponse<Data extends IPFSOrder | IPFSOffer>(error: string, data?: Data): InfuraResponse<any> {
-  return { error, data };
-}
-
-/*
- |--------------------------------------------------------------------------------
- | Types
- |--------------------------------------------------------------------------------
- */
-
-type InfuraResponse<Data extends IPFSOrder | IPFSOffer> =
-  | Data
-  | {
-      error: string;
-      data: Data;
-    };
+type IPFSDocument = IPFSOrder | IPFSOffer;
 
 /**
  * Order is created by either a seller or buyer.

@@ -1,5 +1,5 @@
+import { IPFSOffer, IPFSOrder } from "../../../Entities/IPFS";
 import { Order } from "../../../Entities/Order";
-import { IPFSOffer, IPFSOrder } from "../../../Services/Infura";
 import { OrderClosed } from "../../Exceptions/OrderException";
 import { format } from "./Format";
 

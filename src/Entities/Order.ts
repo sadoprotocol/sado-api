@@ -14,9 +14,10 @@ import {
   OrdinalsTransactedExternally,
 } from "../Orderbook/Exceptions/OrderException";
 import { getAskingPrice } from "../Orderbook/Utilities";
-import { infura, IPFSOrder } from "../Services/Infura";
+import { ipfs } from "../Services/IPFS";
 import { Lookup } from "../Services/Lookup";
 import { db } from "../Services/Mongo";
+import { IPFSOrder } from "./IPFS";
 import { Offer } from "./Offer";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
 
@@ -98,7 +99,7 @@ export class Order {
   */
 
   static async insert(tx: Transaction): Promise<Order | undefined> {
-    const order = await infura.getOrder(tx.cid);
+    const order = await ipfs.getOrder(tx.cid);
     if ("error" in order) {
       await collection.insertOne(makeRejectedOrder(tx, new IPFSLookupFailed(tx.txid, order.error, order.data)));
       return;

@@ -1,5 +1,5 @@
+import { IPFSOrder } from "../../Entities/IPFS";
 import { PriceList } from "../../Libraries/PriceList";
-import { IPFSOrder } from "../../Services/Infura";
 
 export class Collections {
   readonly #collections: CollectionsMap = {};

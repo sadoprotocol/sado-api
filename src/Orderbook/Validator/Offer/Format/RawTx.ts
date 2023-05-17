@@ -1,6 +1,6 @@
 import * as btc from "bitcoinjs-lib";
 
-import { IPFSOffer } from "../../../../Services/Infura";
+import { IPFSOffer } from "../../../../Entities/IPFS";
 import { OfferValidationFailed } from "../../../Exceptions/OfferException";
 
 /**

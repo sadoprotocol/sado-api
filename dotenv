@@ -12,7 +12,7 @@ REDIS_PORT=6379
 
 # IPFS
 
-INFURA_GATEWAY=https://sado.infura-ipfs.io
+IPFS_GATEWAY=https://sado.infura-ipfs.io
 
 # Ocean
 

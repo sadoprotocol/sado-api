@@ -11,7 +11,7 @@ import { resolveOrderbookTransactions } from "./Resolver";
 
 const log = debug("sado-orderbook");
 
-export class OrderBook {
+export class Orderbook {
   readonly ts: number[] = [];
 
   constructor(readonly address: string, readonly options: Options) {}

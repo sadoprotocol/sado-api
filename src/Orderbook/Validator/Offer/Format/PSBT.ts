@@ -1,7 +1,7 @@
 import * as btc from "bitcoinjs-lib";
 
+import { IPFSOffer, IPFSOrder } from "../../../../Entities/IPFS";
 import { parseLocation } from "../../../../Libraries/Transaction";
-import { IPFSOffer, IPFSOrder } from "../../../../Services/Infura";
 import { OfferValidationFailed } from "../../../Exceptions/OfferException";
 
 /**

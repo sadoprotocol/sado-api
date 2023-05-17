@@ -2,9 +2,9 @@ import { envToNumber, getEnvironmentVariable } from "./Libraries/Environment";
 import { DEFAULT_NETWORK } from "./Libraries/Network";
 
 export const config = {
-  port: normalizePort(getEnvironmentVariable("PORT")),
+  port: getEnvironmentVariable("PORT", envToNumber),
   lookupEndpoint: `https://${DEFAULT_NETWORK}.ordit.io/utxo`,
-  infuraGateway: getEnvironmentVariable("INFURA_GATEWAY"),
+  ipfsGateway: getEnvironmentVariable("IPFS_GATEWAY"),
   oceanEndpoint: getEnvironmentVariable("OCEAN_ENDPOINT"),
   redis: {
     host: getEnvironmentVariable("REDIS_HOST"),
@@ -16,14 +16,3 @@ export const config = {
   },
   slack: getEnvironmentVariable("SLACK_WEBHOOK_URL"),
 };
-
-function normalizePort(val: string): number | string | boolean {
-  const port = parseInt(val, 10);
-  if (isNaN(port)) {
-    return val; // named pipe
-  }
-  if (port >= 0) {
-    return port; // port number
-  }
-  return false;
-}

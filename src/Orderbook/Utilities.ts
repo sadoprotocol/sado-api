@@ -1,8 +1,8 @@
+import { IPFSOffer, IPFSOrder } from "../Entities/IPFS";
 import { Transaction } from "../Entities/Transaction";
 import { BTC_TO_SAT } from "../Libraries/Bitcoin";
 import { PriceList } from "../Libraries/PriceList";
 import { parseLocation } from "../Libraries/Transaction";
-import { IPFSOffer, IPFSOrder } from "../Services/Infura";
 import { Lookup } from "../Services/Lookup";
 
 /**
