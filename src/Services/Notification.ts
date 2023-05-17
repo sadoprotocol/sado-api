@@ -76,7 +76,7 @@ export async function sendOfferNotification({ offer, order }: Offer) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `A new offer was just added for <https://sado.infura-ipfs.io/ipfs/${order.cid} | order.cid >.`,
+              text: `A new offer was just added for <https://sado.infura-ipfs.io/ipfs/${order.cid}|order>.`,
             },
           },
           {
