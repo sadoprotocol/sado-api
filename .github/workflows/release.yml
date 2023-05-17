@@ -30,7 +30,7 @@ jobs:
             cd ~/sado-api
             npm i
             npm run build
-            pm2 restart sado-api
+            pm2 reload all
 
       - name: Submit Release Notification
         id: slack

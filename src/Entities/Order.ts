@@ -1,5 +1,5 @@
 import moment from "moment";
-import type { ObjectId, WithId } from "mongodb";
+import type { Filter, ObjectId, WithId } from "mongodb";
 
 import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
@@ -122,8 +122,11 @@ export class Order {
     }
   }
 
-  static async getByAddress(address: string, network: Network): Promise<Order[]> {
-    const documents = await collection.find({ address, network }).sort({ "time.block": -1 }).toArray();
+  static async getByAddress(address: string, network: Network, filter: Filter<OrderDocument> = {}): Promise<Order[]> {
+    const documents = await collection
+      .find({ address, network, ...filter })
+      .sort({ "time.block": -1 })
+      .toArray();
     return documents.map((document) => new Order(document));
   }
 
@@ -431,7 +434,7 @@ type OrderDocument = {
  |--------------------------------------------------------------------------------
  */
 
-type OrderStatus = "pending" | "rejected" | "completed";
+export type OrderStatus = "pending" | "rejected" | "completed";
 
 type OrderTime = {
   /**

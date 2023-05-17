@@ -44,10 +44,10 @@ export async function resolveOrderbookTransactions(address: string, network: Net
 
   if (lookup.network === "mainnet") {
     for (const item of result) {
-      if (item instanceof Order && item.status === "pending") {
+      if (item instanceof Order) {
         await sendOrderNotification(item);
       }
-      if (item instanceof Offer && item.status === "pending") {
+      if (item instanceof Offer) {
         await sendOfferNotification(item);
       }
     }
