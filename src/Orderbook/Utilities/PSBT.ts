@@ -46,7 +46,7 @@ async function getFee(psbt: btc.Psbt, lookup: Lookup): Promise<number> {
   let inputSum = 0;
   for (const input of psbt.txInputs) {
     const hash = input.hash.reverse().toString("hex");
-    const tx = await lookup.getPrunedTransaction(hash);
+    const tx = await lookup.getTransaction(hash);
     if (tx !== undefined) {
       inputSum += btcToSat(tx.vout[input.index].value);
     }

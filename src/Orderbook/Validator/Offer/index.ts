@@ -47,7 +47,7 @@ async function validateTransactionInputs(psbt: btc.Psbt, lookup: Lookup): Promis
   for (const input of psbt.txInputs) {
     const txid = input.hash.reverse().toString("hex");
     const index = input.index;
-    const tx = await lookup.getPrunedTransaction(txid);
+    const tx = await lookup.getTransaction(txid);
     if (tx === undefined) {
       throw new OfferValidationFailed("Unable to find transaction", { txid });
     }

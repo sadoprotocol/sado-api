@@ -274,7 +274,7 @@ export class Order {
 async function getOrdinalVout(location: string, maker: string, lookup: Lookup): Promise<Vout> {
   const [txid, n] = parseLocation(location);
 
-  const tx = await lookup.getPrunedTransaction(txid);
+  const tx = await lookup.getTransaction(txid);
   if (tx === undefined) {
     throw new OrderTransactionNotFound(location);
   }
