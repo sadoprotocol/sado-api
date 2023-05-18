@@ -10,7 +10,17 @@ jobs:
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
 
-      - name: Deploy to EC2
+      - name: Clean Existing
+        uses: appleboy/ssh-action@334f9259f2f8eb3376d33fa4c684fff373f2c2a6 # v0.1.10
+        with:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_SSH_HOST }}
+          username: ${{ secrets.EC2_SSH_USER }}
+          script: |
+            cd ~/sado-api
+            rm -rf ./src
+
+      - name: Deploy Updates
         uses: easingthemes/ssh-deploy@3884c8554ff45c0fd37d3f12a76288d06ce7a2ff # v4.1.8
         env:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
@@ -19,7 +29,7 @@ jobs:
           TARGET: "/home/ubuntu/sado-api"
           EXCLUDE: "/.github/,/.vscode/,/.git/"
 
-      - name: Build & Release
+      - name: Build & Reload
         uses: appleboy/ssh-action@334f9259f2f8eb3376d33fa4c684fff373f2c2a6 # v0.1.10
         with:
           key: ${{ secrets.EC2_SSH_KEY }}
@@ -32,7 +42,7 @@ jobs:
             npm run build
             pm2 reload all
 
-      - name: Submit Release Notification
+      - name: Notify
         id: slack
         uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # v1.23.0
         env:
