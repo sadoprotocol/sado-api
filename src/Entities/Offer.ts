@@ -165,9 +165,9 @@ export class Offer {
    |--------------------------------------------------------------------------------
    */
 
-  async resolve(): Promise<void> {
+  async resolve(lookup: Lookup): Promise<void> {
     try {
-      await validator.offer.validate(this.offer, this.order);
+      await validator.offer.validate(this.offer, this.order, lookup);
     } catch (error) {
       await this.setRejected(error);
     }

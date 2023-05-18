@@ -76,7 +76,7 @@ async function resolvePendingOrders(address: string, lookup: Lookup): Promise<vo
 async function resolvePendingOffers(address: string, lookup: Lookup): Promise<void> {
   const pending = await Offer.getByStatus("pending", address, lookup.network);
   for (const offer of pending) {
-    await offer.resolve();
+    await offer.resolve(lookup);
   }
 }
 

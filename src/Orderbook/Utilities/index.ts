@@ -46,7 +46,7 @@ export function parseSado(utf8?: string):
  */
 export async function getOrderOwner(order: IPFSOrder, lookup: Lookup): Promise<string | undefined> {
   const [txid, vout] = parseLocation(order.location);
-  const tx = await lookup.getTransaction(txid);
+  const tx = await lookup.getPrunedTransaction(txid);
   if (tx === undefined) {
     return undefined;
   }

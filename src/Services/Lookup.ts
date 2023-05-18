@@ -2,14 +2,7 @@ import debug from "debug";
 import fetch, { RequestInit } from "node-fetch";
 
 import { config } from "../Config";
-import {
-  addTransaction,
-  getTransaction,
-  Inscription,
-  Ordinal,
-  ScriptPubKey,
-  Transaction,
-} from "../Entities/Transaction";
+import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Entities/Transaction";
 import { DEFAULT_NETWORK, Network } from "../Libraries/Network";
 
 const log = debug("sado-lookup");
@@ -19,6 +12,7 @@ export class Lookup {
   readonly unspents = new Map<string, Unspent[]>();
   readonly inscriptions = new Map<string, Inscription[]>();
   readonly transactions = new Map<string, Transaction>();
+  readonly prunedTransactions = new Map<string, Transaction>();
   readonly address = new Map<string, Transaction[]>();
 
   constructor(readonly network: Network) {}
@@ -40,7 +34,11 @@ export class Lookup {
     if (cachedUnspents !== undefined) {
       return cachedUnspents;
     }
-    const unspents = await get("/unspents", { address, options: { noord: true } }, this.network);
+    const unspents = await get(
+      "/unspents",
+      { address, options: { noord: true, nohex: true, nowitness: true } },
+      this.network
+    );
     if (unspents === undefined) {
       return [];
     }
@@ -65,10 +63,25 @@ export class Lookup {
     if (cachedTx) {
       return cachedTx;
     }
-    const tx = (await getTransaction(txid, this.network)) ?? (await get("/transaction", { txid }, this.network));
+    const tx = await get("/transaction", { txid }, this.network);
     if (tx !== undefined) {
-      await addTransaction(tx, this.network);
       this.transactions.set(txid, tx);
+    }
+    return tx;
+  }
+
+  async getPrunedTransaction(txid: string): Promise<Transaction | undefined> {
+    const cachedTx = this.prunedTransactions.get(txid);
+    if (cachedTx) {
+      return cachedTx;
+    }
+    const tx = await get(
+      "/transaction",
+      { txid, options: { noord: true, nohex: true, nowitness: true } },
+      this.network
+    );
+    if (tx !== undefined) {
+      this.prunedTransactions.set(txid, tx);
     }
     return tx;
   }

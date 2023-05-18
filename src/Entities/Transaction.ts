@@ -127,6 +127,13 @@ export type Vout = {
   scriptPubKey: ScriptPubKey;
   ordinals: Ordinal[];
   inscriptions: Inscription[];
+  spent:
+    | false
+    | {
+        bestblock: string;
+        confirmations: number;
+        coinbase: boolean;
+      };
 };
 
 export type ScriptSig = {

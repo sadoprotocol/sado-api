@@ -19,7 +19,7 @@ export async function getUTXOState(
   address: string;
   spent: boolean;
 }> {
-  const tx = await lookup.getTransaction(txid);
+  const tx = await lookup.getPrunedTransaction(txid);
   if (tx === undefined) {
     throw new Error(`Transaction ${txid} not found.`);
   }
