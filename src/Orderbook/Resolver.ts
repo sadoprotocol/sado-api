@@ -18,17 +18,23 @@ export async function resolveOrderbookTransactions(address: string, network: Net
   // ### Add Transactions
   // For any non-processed transactions in the address, add them to the database.
 
+  const result: (Order | Offer)[] = [];
+
   const nextTxs = await addOrderbookTransactions(sadoTxs, address, network);
-  const result = await Promise.all(
-    nextTxs.map((tx) => {
-      if (tx.type === "order") {
-        return Order.insert(tx);
+  for (const tx of nextTxs) {
+    if (tx.type === "order") {
+      const order = await Order.insert(tx);
+      if (order !== undefined) {
+        result.push(order);
       }
-      if (tx.type === "offer") {
-        return Offer.insert(tx);
+    }
+    if (tx.type === "offer") {
+      const offer = await Offer.insert(tx, lookup);
+      if (offer !== undefined) {
+        result.push(offer);
       }
-    })
-  );
+    }
+  }
 
   // ### Resolve Pending
   // Run through pending orders and offers, checking of changes and transitioning

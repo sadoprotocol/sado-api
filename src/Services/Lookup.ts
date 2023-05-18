@@ -2,7 +2,14 @@ import debug from "debug";
 import fetch, { RequestInit } from "node-fetch";
 
 import { config } from "../Config";
-import { getTransaction, Inscription, Ordinal, ScriptPubKey, Transaction } from "../Entities/Transaction";
+import {
+  addTransaction,
+  getTransaction,
+  Inscription,
+  Ordinal,
+  ScriptPubKey,
+  Transaction,
+} from "../Entities/Transaction";
 import { DEFAULT_NETWORK, Network } from "../Libraries/Network";
 
 const log = debug("sado-lookup");
@@ -60,6 +67,7 @@ export class Lookup {
     }
     const tx = (await getTransaction(txid, this.network)) ?? (await get("/transaction", { txid }, this.network));
     if (tx !== undefined) {
+      await addTransaction(tx, this.network);
       this.transactions.set(txid, tx);
     }
     return tx;

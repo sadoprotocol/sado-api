@@ -5,9 +5,10 @@ import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
 import { getAddressVoutValue } from "../Libraries/Transaction";
 import { IPFSLookupFailed } from "../Orderbook/Exceptions/GeneralExceptions";
-import { getAskingPrice } from "../Orderbook/Utilities";
+import { getAskingPrice, utils } from "../Orderbook/Utilities";
 import { validator } from "../Orderbook/Validator";
 import { ipfs } from "../Services/IPFS";
+import { Lookup } from "../Services/Lookup";
 import { db } from "../Services/Mongo";
 import { IPFSOffer, IPFSOrder } from "./IPFS";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
@@ -60,6 +61,11 @@ export class Offer {
   readonly time: OfferTime;
 
   /**
+   * Estimated fee in satoshis for the offer transaction.
+   */
+  readonly fee?: number;
+
+  /**
    * Vout containing the ordinals and inscription array.
    */
   vout?: Vout;
@@ -83,6 +89,7 @@ export class Offer {
     this.offer = document.offer;
     this.value = document.value;
     this.time = document.time;
+    this.fee = document.fee;
     this.vout = document.vout;
     this.proof = document.proof;
     this.rejection = document.rejection;
@@ -94,7 +101,7 @@ export class Offer {
   |--------------------------------------------------------------------------------
   */
 
-  static async insert(tx: Transaction): Promise<Offer | undefined> {
+  static async insert(tx: Transaction, lookup: Lookup): Promise<Offer | undefined> {
     const offer = await ipfs.getOffer(tx.cid);
     if ("error" in offer) {
       await collection.insertOne(makeRejectedOffer(tx, new IPFSLookupFailed(tx.txid, offer.error, offer.data)));
@@ -105,7 +112,8 @@ export class Offer {
       await collection.insertOne(makeRejectedOffer(tx, new IPFSLookupFailed(tx.txid, order.error, order.data), offer));
       return;
     }
-    const result = await collection.insertOne(makePendingOffer(tx, order, offer));
+    const fee = await getTransactioFee(offer.offer, lookup);
+    const result = await collection.insertOne(makePendingOffer(tx, order, offer, fee));
     if (result.acknowledged === true) {
       return this.findById(result.insertedId);
     }
@@ -198,6 +206,7 @@ export class Offer {
       },
       ago: moment(this.tx.blocktime).fromNow(), // [TODO] Deprecate in favor of `time.ago`.
       value: new PriceList(this.value),
+      fee: new PriceList(this.fee),
       order: {
         ...this.order,
         price: new PriceList(getAskingPrice(this.order)),
@@ -231,7 +240,7 @@ export class Offer {
  |--------------------------------------------------------------------------------
  */
 
-function makePendingOffer(tx: Transaction, order: IPFSOrder, offer: IPFSOffer): OfferDocument {
+function makePendingOffer(tx: Transaction, order: IPFSOrder, offer: IPFSOffer, fee?: number): OfferDocument {
   return {
     status: "pending",
     address: tx.from,
@@ -243,6 +252,7 @@ function makePendingOffer(tx: Transaction, order: IPFSOrder, offer: IPFSOffer): 
       block: tx.blocktime,
       offer: offer.ts,
     },
+    fee,
     tx,
   };
 }
@@ -263,6 +273,14 @@ function makeRejectedOffer(tx: Transaction, rejection: any, offer?: IPFSOffer): 
   };
 }
 
+async function getTransactioFee(offer: string, lookup: Lookup): Promise<number | undefined> {
+  const psbt = utils.psbt.decode(offer);
+  if (psbt === undefined) {
+    return undefined;
+  }
+  return utils.psbt.getFee(psbt, lookup);
+}
+
 /*
  |--------------------------------------------------------------------------------
  | Document
@@ -278,6 +296,7 @@ type OfferDocument = {
   offer: IPFSOffer;
   value?: number;
   time: OfferTime;
+  fee?: number;
   vout?: Vout;
   proof?: string;
   rejection?: any;

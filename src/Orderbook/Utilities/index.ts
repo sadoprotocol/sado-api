@@ -1,9 +1,14 @@
-import { IPFSOffer, IPFSOrder } from "../Entities/IPFS";
-import { Transaction } from "../Entities/Transaction";
-import { BTC_TO_SAT } from "../Libraries/Bitcoin";
-import { PriceList } from "../Libraries/PriceList";
-import { parseLocation } from "../Libraries/Transaction";
-import { Lookup } from "../Services/Lookup";
+import { IPFSOffer, IPFSOrder } from "../../Entities/IPFS";
+import { Transaction } from "../../Entities/Transaction";
+import { BTC_TO_SAT } from "../../Libraries/Bitcoin";
+import { PriceList } from "../../Libraries/PriceList";
+import { parseLocation } from "../../Libraries/Transaction";
+import { Lookup } from "../../Services/Lookup";
+import { psbt } from "./PSBT";
+
+export const utils = {
+  psbt,
+};
 
 /**
  * Get order item from a vout scriptPubKey utf8 string.
