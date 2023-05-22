@@ -38,16 +38,41 @@ async function hasValidOffer({ offer }: IPFSOffer, order: IPFSOrder, lookup: Loo
 }
 
 async function validateMakerInput(psbt: btc.Psbt, location: string): Promise<void> {
-  const [txid, index] = parseLocation(location);
-  const vinIndex = hasOrderInput(psbt, txid, index);
-  if (vinIndex === false) {
-    throw new OfferValidationFailed("Offer vin does not include the location specified in the order", {
+  const [txid, vout] = parseLocation(location);
+  const [input, index] = getOrderLocationInput(psbt, txid, vout);
+  if (input === false) {
+    throw new OfferValidationFailed("Order utxo is not present in the offer transaction", {
       location,
     });
   }
-  if (vinIndex !== 0) {
-    throw new OfferValidationFailed("Offer location is not the first vin of the transaction", { location });
+  if (index !== 0) {
+    throw new OfferValidationFailed("Order utxo is in the wrong transaction input position", {
+      location,
+      expected: 0,
+      actual: index,
+    });
   }
+  if (input.finalScriptSig !== undefined) {
+    throw new OfferValidationFailed("Order utxo was signed by taker", { location });
+  }
+}
+
+function getOrderLocationInput(
+  psbt: btc.Psbt,
+  txid: string,
+  vout: number
+): [btc.Psbt["data"]["inputs"][number], number] | [false, -1] {
+  let index = 0;
+  for (const input of psbt.data.inputs) {
+    if (input.nonWitnessUtxo) {
+      const tx = btc.Transaction.fromBuffer(input.nonWitnessUtxo);
+      if (tx.getId() === txid && tx.outs.findIndex((_, index) => index === vout) !== -1) {
+        return [input, index];
+      }
+    }
+    index += 1;
+  }
+  return [false, -1];
 }
 
 async function validateTransactionInputs(psbt: btc.Psbt, lookup: Lookup): Promise<void> {
@@ -66,19 +91,6 @@ async function validateTransactionInputs(psbt: btc.Psbt, lookup: Lookup): Promis
       throw new OfferValidationFailed("One or more spent inputs", { txid, index });
     }
   }
-}
-
-function hasOrderInput(psbt: btc.Psbt, txid: string, vout: number): number | false {
-  for (const input of psbt.data.inputs) {
-    if (input.nonWitnessUtxo) {
-      const tx = btc.Transaction.fromBuffer(input.nonWitnessUtxo);
-      const index = tx.outs.findIndex((_, index) => index === vout);
-      if (tx.getId() === txid && index !== -1) {
-        return index;
-      }
-    }
-  }
-  return false;
 }
 
 /**
