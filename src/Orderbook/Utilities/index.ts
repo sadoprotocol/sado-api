@@ -5,9 +5,11 @@ import { PriceList } from "../../Libraries/PriceList";
 import { parseLocation } from "../../Libraries/Transaction";
 import { Lookup } from "../../Services/Lookup";
 import { psbt } from "./PSBT";
+import { raw } from "./Raw";
 
 export const utils = {
   psbt,
+  raw,
 };
 
 /**

@@ -8,5 +8,15 @@
     {
       "mode": "auto"
     }
+  ],
+  "cSpell.words": [
+    "bitcoinjs",
+    "fastify",
+    "ipfs",
+    "psbt",
+    "sado",
+    "txid",
+    "utxo",
+    "vout"
   ]
 }

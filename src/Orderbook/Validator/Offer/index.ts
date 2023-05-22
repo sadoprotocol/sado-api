@@ -26,20 +26,27 @@ async function hasValidOrder(cid: string): Promise<void> {
 
 async function hasValidOffer({ offer }: IPFSOffer, order: IPFSOrder, lookup: Lookup): Promise<void> {
   const psbt = utils.psbt.decode(offer);
-  if (psbt === undefined) {
-    return validateRawTx(offer);
+  if (psbt !== undefined) {
+    await validateMakerInput(psbt, order.location);
+    await validateTransactionInputs(psbt, lookup);
+    return;
   }
-  await validateMakerInput(psbt, order.location);
-  await validateTransactionInputs(psbt, lookup);
+  const raw = validateRawTx(offer);
+  if (raw === false) {
+    throw new OfferValidationFailed("Unable to verify offer validity", { offer });
+  }
 }
 
 async function validateMakerInput(psbt: btc.Psbt, location: string): Promise<void> {
   const [txid, index] = parseLocation(location);
-  const hasMakerInput = hasOrderInput(psbt, txid, index);
-  if (hasMakerInput === false) {
+  const vinIndex = hasOrderInput(psbt, txid, index);
+  if (vinIndex === false) {
     throw new OfferValidationFailed("Offer vin does not include the location specified in the order", {
       location,
     });
+  }
+  if (vinIndex !== 0) {
+    throw new OfferValidationFailed("Offer location is not the first vin of the transaction", { location });
   }
 }
 
@@ -61,12 +68,13 @@ async function validateTransactionInputs(psbt: btc.Psbt, lookup: Lookup): Promis
   }
 }
 
-function hasOrderInput(psbt: btc.Psbt, txid: string, vout: number): boolean {
+function hasOrderInput(psbt: btc.Psbt, txid: string, vout: number): number | false {
   for (const input of psbt.data.inputs) {
     if (input.nonWitnessUtxo) {
       const tx = btc.Transaction.fromBuffer(input.nonWitnessUtxo);
-      if (tx.getId() === txid && tx.outs.findIndex((_, index) => index === vout) !== -1) {
-        return true;
+      const index = tx.outs.findIndex((_, index) => index === vout);
+      if (tx.getId() === txid && index !== -1) {
+        return index;
       }
     }
   }
@@ -88,16 +96,15 @@ function hasOrderInput(psbt: btc.Psbt, txid: string, vout: number): boolean {
  *
  * @returns `true` if a signature exists in the inputs of the transaction.
  */
-export function validateRawTx(offer: string): undefined {
-  try {
-    const tx = btc.Transaction.fromHex(offer);
-    for (const input of tx.ins) {
-      if (input.script.toString()) {
-        return;
-      }
-    }
-  } catch (error) {
-    throw new OfferValidationFailed(error.message, { offer });
+export function validateRawTx(offer: string): boolean {
+  const tx = utils.raw.decode(offer);
+  if (tx === undefined) {
+    throw new OfferValidationFailed("Unable to verify offer validity", { offer });
   }
-  throw new OfferValidationFailed("Unable to verify offer validity", { offer });
+  for (const input of tx.ins) {
+    if (input.script.toString()) {
+      return true;
+    }
+  }
+  return false;
 }

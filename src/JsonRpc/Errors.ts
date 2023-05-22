@@ -1,6 +1,22 @@
 import { RpcError } from "./Core";
 
 /**
+ * The **HTTP 400 Bad Request** response status code indicates that the server
+ * cannot or will not process the request due to something that is perceived to
+ * be a client error.
+ */
+export class BadRequestError<D = unknown> extends RpcError<D> {
+  /**
+   * Instantiate a new BadRequestError.
+   *
+   * @param data - Optional data to send with the error.
+   */
+  constructor(message = "Bad Request", data?: D) {
+    super(message, -32000, data);
+  }
+}
+
+/**
  * The **HTTP 401 Unauthorized** response status code indicates that the client
  * request has not been completed because it lacks valid authentication
  * credentials for the requested resource.
@@ -21,8 +37,8 @@ export class UnauthorizedError<D = unknown> extends RpcError<D> {
    *
    * @param data - Optional data to send with the error.
    */
-  constructor(data?: D) {
-    super("Unauthorized", -32001, data);
+  constructor(message = "Unauthorized", data?: D) {
+    super(message, -32001, data);
   }
 }
 
@@ -40,10 +56,11 @@ export class ForbiddenError<D = unknown> extends RpcError<D> {
   /**
    * Instantiate a new ForbiddenError.
    *
+   * @param message - Optional message to send with the error. Default: "Forbidden".
    * @param data - Optional data to send with the error.
    */
-  constructor(data?: D) {
-    super("Forbidden", -32003, data);
+  constructor(message = "Forbidden", data?: D) {
+    super(message, -32003, data);
   }
 }
 
@@ -79,9 +96,10 @@ export class NotAcceptableError<D = unknown> extends RpcError<D> {
   /**
    * Instantiate a new NotAcceptableError.
    *
-   * @param data - Optional data to send with the error.
+   * @param message - Optional message to send with the error. Default: "Not Acceptable".
+   * @param data    - Optional data to send with the error.
    */
-  constructor(message: string, data?: D) {
+  constructor(message = "Not Acceptable", data?: D) {
     super(message, -32006, data);
   }
 }
@@ -100,9 +118,10 @@ export class ConflictError<D = unknown> extends RpcError<D> {
   /**
    * Instantiate a new ConflictError.
    *
+   * @param message - Optional message to send with the error. Default: "Conflict".
    * @param data - Optional data to send with the error.
    */
-  constructor(data?: D) {
-    super("Conflict", -32009, data);
+  constructor(message = "Conflict", data?: D) {
+    super(message, -32009, data);
   }
 }
