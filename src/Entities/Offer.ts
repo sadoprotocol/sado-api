@@ -119,6 +119,11 @@ export class Offer {
     }
   }
 
+  static async query(filter: Filter<OfferDocument>): Promise<Offer[]> {
+    const documents = await collection.find(filter).toArray();
+    return documents.map((document) => new Offer(document));
+  }
+
   static async findById(_id: ObjectId): Promise<Offer | undefined> {
     const document = await collection.findOne({ _id });
     if (document !== null) {

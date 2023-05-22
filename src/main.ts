@@ -1,5 +1,5 @@
 import "./Methods/Orderbook";
-import "./Methods/IPFS";
+import "./Methods/Order";
 import "./Methods/Offer";
 
 import debug from "debug";

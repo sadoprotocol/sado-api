@@ -110,6 +110,11 @@ export class Order {
     }
   }
 
+  static async query(filter: Filter<OrderDocument>): Promise<Order[]> {
+    const documents = await collection.find(filter).toArray();
+    return documents.map((document) => new Order(document));
+  }
+
   static async find(): Promise<Order[]> {
     const documents = await collection.find().toArray();
     return documents.map((document) => new Order(document));
