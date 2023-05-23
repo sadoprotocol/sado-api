@@ -4,6 +4,7 @@ import { Offer } from "../Entities/Offer";
 import { Order } from "../Entities/Order";
 import { flushTransactions } from "../Entities/Transaction";
 import { Network } from "../Libraries/Network";
+import { PriceList } from "../Libraries/PriceList";
 import { OffersAnalytics } from "./Analytics/OffersAnalytics";
 import { OrdersAnalytics } from "./Analytics/OrdersAnalytics";
 import { isMonitoring, monitorAddress } from "./Monitor/Queue";
@@ -51,6 +52,10 @@ export class Orderbook {
       analytics: {
         orders: new OrdersAnalytics(),
         offers: new OffersAnalytics(),
+        total: {
+          value: new PriceList(),
+          price: new PriceList(),
+        },
       },
       pending: {
         orders: [],
@@ -75,10 +80,10 @@ export class Orderbook {
           response.pending.orders[duplicateIndex].value.increment(order.value ?? 0);
           continue;
         }
-        response.analytics.orders.addPending(order.order);
+        response.analytics.orders.addPending(order.order, order.value ?? 0);
       }
       if (order.status === "completed") {
-        response.analytics.orders.addCompleted(order.order);
+        response.analytics.orders.addCompleted(order.order, order.value ?? 0);
       }
       response[order.status].orders.push(order.toJSON());
     }
@@ -86,12 +91,15 @@ export class Orderbook {
     for (const offer of offers) {
       response[offer.status].offers.push(offer.toJSON());
       if (offer.status === "pending") {
-        response.analytics.offers.addPending(offer.order);
+        response.analytics.offers.addPending(offer.order, offer.value ?? 0);
       }
       if (offer.status === "completed") {
-        response.analytics.offers.addCompleted(offer.order);
+        response.analytics.offers.addCompleted(offer.order, offer.value ?? 0);
       }
     }
+
+    response.analytics.total.value.set(response.analytics.orders.value + response.analytics.offers.value);
+    response.analytics.total.price.set(response.analytics.orders.total + response.analytics.offers.total);
 
     this.ts.push(performance.now() - t);
 
@@ -116,6 +124,10 @@ type OrderbookResponse = {
   analytics: {
     orders: OrdersAnalytics;
     offers: OffersAnalytics;
+    total: {
+      value: PriceList;
+      price: PriceList;
+    };
   };
   pending: {
     orders: ReturnType<Order["toJSON"]>[];
