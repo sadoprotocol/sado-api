@@ -39,6 +39,7 @@ jobs:
             PATH=$PATH:/home/ubuntu/.nvm/versions/node/v18.16.0/bin
             cd ~/sado-api
             npm i
+            rm -rf ./dist
             npm run build
             pm2 reload all
 

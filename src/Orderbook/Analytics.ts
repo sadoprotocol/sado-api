@@ -1,9 +1,9 @@
-import { Offer } from "../../Entities/Offer";
-import { Order } from "../../Entities/Order";
-import { Network } from "../../Libraries/Network";
-import { PriceList } from "../../Libraries/PriceList";
-import { OffersAnalytics } from "../Analytics/OffersAnalytics";
-import { OrdersAnalytics } from "../Analytics/OrdersAnalytics";
+import { Offer } from "../Entities/Offer";
+import { Order } from "../Entities/Order";
+import { Network } from "../Libraries/Network";
+import { PriceList } from "../Libraries/PriceList";
+import { OffersAnalytics } from "./Analytics/OffersAnalytics";
+import { OrdersAnalytics } from "./Analytics/OrdersAnalytics";
 
 export async function getOrderbookAnalytics(address: string, network: Network): Promise<OrderbookAnalytics> {
   const analytics = {

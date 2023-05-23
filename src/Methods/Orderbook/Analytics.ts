@@ -2,7 +2,7 @@ import Schema, { string } from "computed-types";
 
 import { method } from "../../JsonRpc/Method";
 import { DEFAULT_NETWORK } from "../../Libraries/Network";
-import { getOrderbookAnalytics as getAnalytics } from "../../Orderbook/Providers/Analytics";
+import { getOrderbookAnalytics as getAnalytics } from "../../Orderbook/Analytics";
 import { validator } from "../Validator";
 
 export const getOrderbookAnalytics = method({
