@@ -8,6 +8,7 @@ import { PriceList } from "../Libraries/PriceList";
 import { OffersAnalytics } from "./Analytics/OffersAnalytics";
 import { OrdersAnalytics } from "./Analytics/OrdersAnalytics";
 import { isMonitoring, monitorAddress } from "./Monitor/Queue";
+import { OrderbookAnalytics } from "./Providers/Analytics";
 import { resolveOrderbookTransactions } from "./Resolver";
 
 const log = debug("sado-orderbook");
@@ -121,14 +122,7 @@ type Options = {
 
 type OrderbookResponse = {
   ts: number[];
-  analytics: {
-    orders: OrdersAnalytics;
-    offers: OffersAnalytics;
-    total: {
-      value: PriceList;
-      price: PriceList;
-    };
-  };
+  analytics: OrderbookAnalytics;
   pending: {
     orders: ReturnType<Order["toJSON"]>[];
     offers: ReturnType<Offer["toJSON"]>[];

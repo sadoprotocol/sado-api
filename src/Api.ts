@@ -3,8 +3,9 @@ import { FastifyInstance } from "fastify";
 import { WebSocket } from "ws";
 
 import {
-  ActionContext,
+  Context,
   ErrorResponse,
+  InvalidParamsError,
   Method,
   MethodNotFoundError,
   Notification,
@@ -18,13 +19,13 @@ import {
 const log = debug("sado-api");
 
 class Api {
-  #methods = new Map<string, Method<any, any>>();
+  #methods = new Map<string, Method>();
 
   constructor() {
     this.fastify = this.fastify.bind(this);
   }
 
-  register<P extends void | Params = void, R = void>(method: string, handler: Method<P, R>): void {
+  register<M extends Method<any, any, any>>(method: string, handler: M): void {
     this.#methods.set(method, handler);
     log(`registered method ${method}`);
   }
@@ -64,11 +65,11 @@ class Api {
    * the result will be `undefined`.
    *
    * @param request - JSON RPC request or notification.
-   * @param context - Request contex to be passed to the method handler.
+   * @param context - Request context to be passed to the method handler.
    */
   async #handleMessage(
     request: Request<Params> | Notification<Params>,
-    context: Partial<ActionContext> = {}
+    context: Partial<Context> = {}
   ): Promise<SuccessResponse | ErrorResponse | undefined> {
     try {
       validateRequest(request);
@@ -80,8 +81,9 @@ class Api {
       };
     }
 
-    const method = this.#methods.get(request.method);
+    // ### Retrieve Method
 
+    const method = this.#methods.get(request.method);
     if (method === undefined) {
       return {
         jsonrpc: "2.0",
@@ -90,23 +92,43 @@ class Api {
       };
     }
 
-    for (const action of method.actions ?? []) {
-      const res = await action.call(response, request as any, context as any);
-      if (res.status === "reject") {
+    // ### Validate Parameters
+
+    if (method.validate !== undefined) {
+      const [err] = method.validate?.(request.params ?? {});
+      if (err) {
         return {
           jsonrpc: "2.0",
-          error: res.error,
+          error: new InvalidParamsError(err.message),
           id: (request as any).id ?? null,
         };
       }
     }
+
+    // ### Run Actions
+
+    for (const action of method.actions ?? []) {
+      const result = await (action as any)(context, response);
+      if (result.status === "reject") {
+        return {
+          jsonrpc: "2.0",
+          error: result.error,
+          id: (request as any).id ?? null,
+        };
+      }
+      for (const key in result.params) {
+        (request.params as any)[key] = result.params[key];
+      }
+    }
+
+    // ### Handle Request
 
     if ("id" in request) {
       let result: any;
       try {
         result = {
           jsonrpc: "2.0",
-          result: await method.handler((request.params ?? context) as any, context as any),
+          result: await method.handler(request.params ?? {}, context),
           id: request.id,
         };
       } catch (error) {
@@ -119,7 +141,7 @@ class Api {
       return result;
     }
 
-    method?.handler((request.params ?? context) as any, context as any);
+    method?.handler(request.params ?? {}, context);
   }
 }
 
