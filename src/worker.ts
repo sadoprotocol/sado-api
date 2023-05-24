@@ -1,19 +1,17 @@
 import { Worker } from "bullmq";
 
-import { Network } from "../../Libraries/Network";
-import { resolveOrderbookTransactions } from "../Resolver";
-import { connection } from "./Connection";
-
-export const WORKER_NAME = "orderbook";
+import { config } from "./Config";
+import { Network } from "./Libraries/Network";
+import { resolveOrderbookTransactions } from "./Orderbook/Resolver";
 
 const worker = new Worker<Data>(
-  WORKER_NAME,
+  "orderbook",
   async ({ data: { address, network } }) => {
     await resolveOrderbookTransactions(address, network);
   },
   {
     concurrency: 5,
-    connection,
+    connection: config.redis,
   }
 );
 

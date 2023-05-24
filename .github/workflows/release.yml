@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.EC2_SSH_USER }}
           script: |
             cd ~/sado-api
-            rm -rf ./src
+            rm -rf ./src ./dist
 
       - name: Deploy Updates
         uses: easingthemes/ssh-deploy@3884c8554ff45c0fd37d3f12a76288d06ce7a2ff # v4.1.8
@@ -39,27 +39,17 @@ jobs:
             PATH=$PATH:/home/ubuntu/.nvm/versions/node/v18.16.0/bin
             cd ~/sado-api
             npm i
-            rm -rf ./dist
             npm run build
-            pm2 reload all
+            pm2 reload api
 
       - name: Notify
         id: slack
-        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # v1.23.0
+        uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 # v1.24.0
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
         with:
           payload: |
             {
-              "text": "Sado API Released: ${{ github.event.release.name }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "Sado API Released\nRelease Version: ${{ github.event.release.name }}\nRelease Notes: https://github.com/cakespecial/sado-api/releases/tag/${{ github.event.release.tag_name }}"
-                  }
-                }
-              ]
+              "title": "Sado API New Release: ${{ github.event.release.name }}",
+              "content": "Release Version: ${{ github.event.release.name }}\nRelease Notes: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.event.release.tag_name }}"
             }

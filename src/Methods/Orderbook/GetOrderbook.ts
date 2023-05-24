@@ -8,7 +8,7 @@ import { PriceList } from "../../Libraries/PriceList";
 import { OrderbookAnalytics } from "../../Orderbook/Analytics";
 import { OffersAnalytics } from "../../Orderbook/Analytics/OffersAnalytics";
 import { OrdersAnalytics } from "../../Orderbook/Analytics/OrdersAnalytics";
-import { isMonitoring } from "../../Orderbook/Monitor/Queue";
+import { isMonitoring } from "../../Orderbook/Monitor";
 import { resolveOrderbook } from "../../Orderbook/Resolver";
 import { validator } from "../Validator";
 

@@ -6,7 +6,7 @@ import { addOrderbookTransactions, Transaction } from "../Entities/Transaction";
 import { Network } from "../Libraries/Network";
 import { Lookup } from "../Services/Lookup";
 import { sendOfferNotification, sendOrderNotification } from "../Services/Notification";
-import { monitorAddress } from "./Monitor/Queue";
+import { monitorAddress } from "./Monitor";
 import { parseSado } from "./Utilities";
 
 const log = debug("sado-resolver");

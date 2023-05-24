@@ -11,11 +11,13 @@
   ],
   "cSpell.words": [
     "bitcoinjs",
+    "bullmq",
     "fastify",
     "ipfs",
     "psbt",
     "regtest",
     "sado",
+    "sadoprotocol",
     "txid",
     "utxo",
     "vout"
