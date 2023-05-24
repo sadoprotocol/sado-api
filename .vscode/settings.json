@@ -10,10 +10,12 @@
     }
   ],
   "cSpell.words": [
+    "autorestart",
     "bitcoinjs",
     "bullmq",
     "fastify",
     "ipfs",
+    "orderbooks",
     "psbt",
     "regtest",
     "sado",

@@ -5,6 +5,7 @@ import { WebSocket } from "ws";
 import {
   Context,
   ErrorResponse,
+  InternalError,
   InvalidParamsError,
   Method,
   MethodNotFoundError,
@@ -12,6 +13,7 @@ import {
   Params,
   Request,
   response,
+  RpcError,
   SuccessResponse,
   validateRequest,
 } from "./JsonRpc";
@@ -134,7 +136,7 @@ class Api {
       } catch (error) {
         result = {
           jsonrpc: "2.0",
-          error,
+          error: error instanceof RpcError ? error : new InternalError(error.message),
           id: request.id,
         };
       }

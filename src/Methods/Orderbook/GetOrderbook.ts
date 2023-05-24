@@ -2,13 +2,13 @@ import Schema, { string } from "computed-types";
 
 import { Offer } from "../../Entities/Offer";
 import { Order } from "../../Entities/Order";
+import { hasWorker } from "../../Entities/Worker";
 import { method } from "../../JsonRpc/Method";
 import { DEFAULT_NETWORK, Network } from "../../Libraries/Network";
 import { PriceList } from "../../Libraries/PriceList";
 import { OrderbookAnalytics } from "../../Orderbook/Analytics";
 import { OffersAnalytics } from "../../Orderbook/Analytics/OffersAnalytics";
 import { OrdersAnalytics } from "../../Orderbook/Analytics/OrdersAnalytics";
-import { isMonitoring } from "../../Orderbook/Monitor";
 import { resolveOrderbook } from "../../Orderbook/Resolver";
 import { validator } from "../Validator";
 
@@ -25,7 +25,7 @@ export const getOrderbook = method({
 export async function getOrderbookByAddress(address: string, network: Network): Promise<Orderbook> {
   const ts = performance.now();
 
-  if ((await isMonitoring(address, network)) === false) {
+  if ((await hasWorker(address, network)) === false) {
     await resolveOrderbook(address, network);
   }
 

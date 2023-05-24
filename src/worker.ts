@@ -1,25 +1,21 @@
-import { Worker } from "bullmq";
+import debug from "debug";
 
-import { config } from "./Config";
-import { Network } from "./Libraries/Network";
-import { resolveOrderbookTransactions } from "./Orderbook/Resolver";
+import { getWorkers } from "./Entities/Worker";
+import { resolveOrderbook } from "./Orderbook/Resolver";
 
-const worker = new Worker<Data>(
-  "orderbook",
-  async ({ data: { address, network } }) => {
-    await resolveOrderbookTransactions(address, network);
-  },
-  {
-    concurrency: 5,
-    connection: config.redis,
+const log = debug("sado-worker");
+
+async function start() {
+  log("Resolving orderbooks");
+  const orderbooks = await getWorkers();
+  for (const { address, network } of orderbooks) {
+    try {
+      await resolveOrderbook(address, network);
+    } catch (error) {
+      log(error.message);
+    }
   }
-);
+  log("Resolved orderbooks");
+}
 
-worker.on("failed", (job) => {
-  console.log("Orderbook Worker Failed", job); // TODO: Notify of failure on slack when notifications are implemented
-});
-
-type Data = {
-  address: string;
-  network: Network;
-};
+start();

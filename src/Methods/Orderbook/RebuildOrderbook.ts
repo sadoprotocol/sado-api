@@ -5,7 +5,7 @@ import { Order } from "../../Entities/Order";
 import { flushTransactions } from "../../Entities/Transaction";
 import { method } from "../../JsonRpc/Method";
 import { DEFAULT_NETWORK } from "../../Libraries/Network";
-import { resolveOrderbookTransactions } from "../../Orderbook/Resolver";
+import { resolveOrderbook } from "../../Orderbook/Resolver";
 import { validator } from "../Validator";
 
 export const rebuildOrderbook = method({
@@ -17,6 +17,6 @@ export const rebuildOrderbook = method({
     await flushTransactions(address);
     await Order.flush(address);
     await Offer.flush(address);
-    await resolveOrderbookTransactions(address, network);
+    await resolveOrderbook(address, network);
   },
 });

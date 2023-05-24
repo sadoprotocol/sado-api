@@ -7,9 +7,6 @@ PORT=3030
 MONGODB_NAME=sado
 MONGODB_URI=mongodb://localhost:27017
 
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
 # IPFS
 
 IPFS_GATEWAY=https://sado.infura-ipfs.io

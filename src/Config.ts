@@ -6,10 +6,6 @@ export const config = {
   lookupEndpoint: `https://${DEFAULT_NETWORK}.ordit.io/utxo`,
   ipfsGateway: getEnvironmentVariable("IPFS_GATEWAY"),
   oceanEndpoint: getEnvironmentVariable("OCEAN_ENDPOINT"),
-  redis: {
-    host: getEnvironmentVariable("REDIS_HOST"),
-    port: getEnvironmentVariable("REDIS_PORT", envToNumber),
-  },
   mongo: {
     name: getEnvironmentVariable("MONGODB_NAME"),
     uri: getEnvironmentVariable("MONGODB_URI"),

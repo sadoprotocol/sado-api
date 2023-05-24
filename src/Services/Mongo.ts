@@ -44,6 +44,7 @@ async function createIndexes() {
   await collection("transactions").createIndex({ txid: 1 }, { unique: true });
   await collection("orders").createIndex({ address: 1 });
   await collection("offers").createIndex({ address: 1 });
+  await collection("worker").createIndex({ address: 1, network: 1 }, { unique: true });
   log("indexes created");
 }
 

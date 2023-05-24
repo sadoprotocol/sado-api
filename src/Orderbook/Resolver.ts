@@ -3,24 +3,13 @@ import debug from "debug";
 import { Offer } from "../Entities/Offer";
 import { Order } from "../Entities/Order";
 import { addOrderbookTransactions, Transaction } from "../Entities/Transaction";
+import { addWorker } from "../Entities/Worker";
 import { Network } from "../Libraries/Network";
 import { Lookup } from "../Services/Lookup";
 import { sendOfferNotification, sendOrderNotification } from "../Services/Notification";
-import { monitorAddress } from "./Monitor";
 import { parseSado } from "./Utilities";
 
 const log = debug("sado-resolver");
-
-/**
- * Executes the orderbook resolver and adds the address to the monitor queue.
- *
- * @param address - Network address of the orderbook.
- * @param network - Network the orderbook is on.
- */
-export async function resolveOrderbook(address: string, network: Network): Promise<void> {
-  await resolveOrderbookTransactions(address, network);
-  monitorAddress(address, network);
-}
 
 /**
  * Resolves orderbook transactions for an address.
@@ -28,8 +17,10 @@ export async function resolveOrderbook(address: string, network: Network): Promi
  * @param address - Network address of the orderbook.
  * @param network - Network the orderbook is on.
  */
-export async function resolveOrderbookTransactions(address: string, network: Network): Promise<void> {
+export async function resolveOrderbook(address: string, network: Network): Promise<void> {
   log(`${network}: Resolving Orderbook ${address}`);
+
+  await addWorker(address, network);
 
   const lookup = new Lookup(network);
 

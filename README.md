@@ -75,5 +75,4 @@ An example with the current dotenv configuration.
 
 ```
 MONGODB_URI=mongodb://host.docker.internal:27017
-REDIS_HOST=host.docker.internal
 ```
