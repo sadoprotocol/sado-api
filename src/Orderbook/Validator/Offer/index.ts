@@ -70,6 +70,13 @@ function getOrderLocationInput(
         return [input, index];
       }
     }
+    if (input.witnessUtxo) {
+      const inputTxid = psbt.txInputs[index].hash.reverse().toString("hex");
+      const inputVout = psbt.txInputs[index].index;
+      if (inputTxid === txid && inputVout === vout) {
+        return [input, index];
+      }
+    }
     index += 1;
   }
   return [false, -1];
