@@ -21,7 +21,6 @@ async function connect() {
     .connect()
     .then(() => {
       log("client connected");
-      createIndexes();
     })
     .catch(() => {
       log("client connection failed. Retrying...");
@@ -36,16 +35,6 @@ async function connect() {
  */
 function collection<T extends Document>(name: string) {
   return client.db(config.mongo.name).collection<T>(name);
-}
-
-async function createIndexes() {
-  await collection("ipfs").createIndex({ cid: 1 }, { unique: true });
-  await collection("notifications").createIndex({ cid: 1 }, { unique: true });
-  await collection("transactions").createIndex({ txid: 1 }, { unique: true });
-  await collection("orders").createIndex({ address: 1 });
-  await collection("offers").createIndex({ address: 1 });
-  await collection("worker").createIndex({ address: 1, network: 1 }, { unique: true });
-  log("indexes created");
 }
 
 connect();
