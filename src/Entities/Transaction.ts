@@ -109,8 +109,8 @@ export type Transaction = {
   confirmations: number;
   time: number;
   blocktime: number;
-  type: "order" | "offer"; // tx type in relation to a sado order|offer
-  cid: string; // sado CID
+  type: TransactionType;
+  cid: string;
 };
 
 export type Vin = {
@@ -160,7 +160,7 @@ export type Ordinal = {
   epoch: number;
   period: number;
   offset: number;
-  rarity: string; // [TODO] find the rarity values
+  rarity: OrdinalRarity;
   output: string;
   start: number;
   size: number;
@@ -178,3 +178,7 @@ export type Inscription = {
   media_size: number;
   media_content: string;
 };
+
+export type OrdinalRarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "mythic";
+
+export type TransactionType = "order" | "offer" | "collection";

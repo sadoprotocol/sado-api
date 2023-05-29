@@ -11,17 +11,26 @@
   ],
   "cSpell.words": [
     "autorestart",
+    "bestblock",
     "bitcoinjs",
+    "blockhash",
+    "blocktime",
     "bullmq",
     "fastify",
     "ipfs",
+    "locktime",
     "orderbooks",
     "psbt",
     "regtest",
     "sado",
     "sadoprotocol",
+    "satoshi",
+    "satoshis",
     "txid",
+    "txinwitness",
+    "upserted",
     "utxo",
-    "vout"
+    "vout",
+    "vsize"
   ]
 }

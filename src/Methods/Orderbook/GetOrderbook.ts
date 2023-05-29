@@ -1,5 +1,7 @@
 import Schema, { string } from "computed-types";
 
+import { getCollections } from "../../Entities/Collection";
+import { IPFSCollection } from "../../Entities/IPFS";
 import { Offer } from "../../Entities/Offer";
 import { Order } from "../../Entities/Order";
 import { hasWorker } from "../../Entities/Worker";
@@ -43,6 +45,7 @@ export async function getOrderbookByAddress(address: string, network: Network): 
         price: new PriceList(),
       },
     },
+    collections: await getCollections(),
     pending: {
       orders: [],
       offers: [],
@@ -95,6 +98,7 @@ export async function getOrderbookByAddress(address: string, network: Network): 
 type Orderbook = {
   ts: number;
   analytics: OrderbookAnalytics;
+  collections: IPFSCollection[];
   pending: {
     orders: ReturnType<Order["toJSON"]>[];
     offers: ReturnType<Offer["toJSON"]>[];

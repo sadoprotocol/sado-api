@@ -1,5 +1,5 @@
 import { IPFSOffer, IPFSOrder } from "../../Entities/IPFS";
-import { Transaction } from "../../Entities/Transaction";
+import { Transaction, TransactionType, Vout } from "../../Entities/Transaction";
 import { BTC_TO_SAT } from "../../Libraries/Bitcoin";
 import { PriceList } from "../../Libraries/PriceList";
 import { parseLocation } from "../../Libraries/Transaction";
@@ -15,7 +15,8 @@ export const utils = {
 /**
  * Get order item from a vout scriptPubKey utf8 string.
  *
- * A valid order item contains a value in the format of `sado=order:cid` or `sado=offer:cid`.
+ * A valid order item contains a value in the format of `sado=order:cid`, `sado=offer:cid`
+ * or `sad=collection:cid`.
  *
  * @param utf8 - ScriptPubKey utf8 string.
  *
@@ -23,14 +24,14 @@ export const utils = {
  */
 export function parseSado(utf8?: string):
   | {
-      type: "order" | "offer";
+      type: TransactionType;
       cid: string;
     }
   | undefined {
   if (utf8?.includes("sado=") === true) {
     const vs = utf8.split("=");
     const [type, cid] = vs[1].split(":");
-    if (type === "order" || type === "offer") {
+    if (type === "order" || type === "offer" || type === "collection") {
       return { type, cid };
     }
   }
@@ -85,6 +86,14 @@ export function getAskingPrice(order: IPFSOrder): number {
     return parseInt(order.cardinals);
   }
   return 0;
+}
+
+export async function getLocationVout(txid: string, vout: number, lookup: Lookup): Promise<Vout | undefined> {
+  const tx = await lookup.getTransaction(txid);
+  if (tx === undefined) {
+    return undefined;
+  }
+  return tx.vout[vout];
 }
 
 /**

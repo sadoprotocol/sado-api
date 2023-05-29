@@ -2,7 +2,7 @@ import debug from "debug";
 import fetch from "node-fetch";
 
 import { config } from "../Config";
-import { getIPFS, IPFSOffer, IPFSOrder, setIPFS } from "../Entities/IPFS";
+import { getIPFS, IPFSCollection, IPFSImage, IPFSOffer, IPFSOrder, setIPFS } from "../Entities/IPFS";
 import { makeObjectKeyChecker } from "../Libraries/Object";
 
 const log = debug("sado-ipfs");
@@ -17,6 +17,17 @@ const FETCH_REQUEST_DEFAULTS = {
 
 const hasValidOrderKeys = makeObjectKeyChecker(["ts", "type", "maker", "location", "signature"]);
 const hasValidOfferKeys = makeObjectKeyChecker(["ts", "origin", "taker", "offer"]);
+const hasValidCollectionKeys = makeObjectKeyChecker([
+  "id",
+  "owner",
+  "name",
+  "title",
+  "intro",
+  "description",
+  "cover",
+  "banner",
+]);
+const hasValidImageKeys = makeObjectKeyChecker(["img"]);
 
 /*
  |--------------------------------------------------------------------------------
@@ -27,6 +38,8 @@ const hasValidOfferKeys = makeObjectKeyChecker(["ts", "origin", "taker", "offer"
 export const ipfs = {
   getOrder,
   getOffer,
+  getCollection,
+  getImage,
 };
 
 /*
@@ -59,13 +72,37 @@ async function getOffer(cid: string): Promise<IPFSResponse<IPFSOffer>> {
   return successResponse(data);
 }
 
+async function getCollection(cid: string): Promise<IPFSResponse<IPFSCollection>> {
+  const data = await get<IPFSCollection>(cid);
+  if (data === undefined) {
+    return errorResponse("Collection does not exist, or has been removed", { cid });
+  }
+  if (hasValidCollectionKeys(data) === false) {
+    return errorResponse("Malformed collection", { cid });
+  }
+  data.cid = cid;
+  return successResponse(data);
+}
+
+async function getImage(cid: string): Promise<IPFSResponse<IPFSImage>> {
+  const data = await get<IPFSImage>(cid);
+  if (data === undefined) {
+    return errorResponse("Collection does not exist, or has been removed", { cid });
+  }
+  if (hasValidImageKeys(data) === false) {
+    return errorResponse("Malformed collection", { cid });
+  }
+  data.cid = cid;
+  return successResponse(data);
+}
+
 /*
  |--------------------------------------------------------------------------------
  | Utilities
  |--------------------------------------------------------------------------------
  */
 
-async function get<Data extends IPFSOrder | IPFSOffer>(cid: string): Promise<Data | undefined> {
+async function get<Data extends IPFSData>(cid: string): Promise<Data | undefined> {
   log("Fetching CID '%s'", cid);
   const document = await getIPFS(cid);
   if (document !== undefined) {
@@ -79,7 +116,7 @@ async function get<Data extends IPFSOrder | IPFSOffer>(cid: string): Promise<Dat
   }
 }
 
-function successResponse<Data extends IPFSOrder | IPFSOffer>(data: Data): IPFSResponse<Data> {
+function successResponse<Data extends IPFSData>(data: Data): IPFSResponse<Data> {
   return data;
 }
 
@@ -93,9 +130,11 @@ function errorResponse(error: string, data?: any): IPFSResponse<any> {
  |--------------------------------------------------------------------------------
  */
 
-type IPFSResponse<Data extends IPFSOrder | IPFSOffer> =
+type IPFSResponse<Data extends IPFSData> =
   | Data
   | {
       error: string;
       data: any;
     };
+
+type IPFSData = IPFSOrder | IPFSOffer | IPFSCollection | IPFSImage;

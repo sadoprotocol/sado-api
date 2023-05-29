@@ -22,17 +22,15 @@ export async function getOrderbookAnalytics(address: string, network: Network): 
 }
 
 async function getOrdersAnalytics(address: string, network: Network): Promise<OrdersAnalytics> {
-  const duplicates: any = {};
+  const duplicates = new Set();
   const orders = await Order.getByAddress(address, network);
   const analytics = new OrdersAnalytics();
   for (const order of orders) {
     if (order.status === "pending") {
-      const duplicateIndex = duplicates[order.order.location];
-      if (duplicateIndex === undefined) {
-        duplicates[order.order.location] = true;
-      } else {
+      if (duplicates.has(order.order.location)) {
         continue;
       }
+      duplicates.add(order.order.location);
       analytics.addPending(order.order, order.value ?? 0);
     }
     if (order.status === "completed") {

@@ -49,7 +49,7 @@ Once the docker containers are up and running we can start the API.
 $ npm start
 ```
 
-To monitor the orderbook you will also need to spin up a worker instance.
+Currently the orderbook resolver loop goes through a cron job worker, for local development purposes you can run the worker manually to update the orderbooks on the latest blockchain state.
 
 ```sh
 $ npm run worker

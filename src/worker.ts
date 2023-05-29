@@ -6,7 +6,7 @@ import { resolveOrderbook } from "./Orderbook/Resolver";
 const log = debug("sado-worker");
 
 async function start() {
-  log("Resolving orderbooks");
+  log("resolving orderbooks");
   const orderbooks = await getWorkers();
   for (const { address, network } of orderbooks) {
     try {
@@ -15,7 +15,7 @@ async function start() {
       log(error.message);
     }
   }
-  log("Resolved orderbooks");
+  log("resolved orderbooks");
 }
 
 start();

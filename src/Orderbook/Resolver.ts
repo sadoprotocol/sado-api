@@ -1,5 +1,6 @@
 import debug from "debug";
 
+import { addCollection } from "../Entities/Collection";
 import { Offer } from "../Entities/Offer";
 import { Order } from "../Entities/Order";
 import { addOrderbookTransactions, Transaction } from "../Entities/Transaction";
@@ -37,6 +38,9 @@ export async function resolveOrderbook(address: string, network: Network): Promi
 
   const nextTxs = await addOrderbookTransactions(sadoTxs, address, network);
   for (const tx of nextTxs) {
+    if (tx.type === "collection") {
+      await addCollection(tx.cid);
+    }
     if (tx.type === "order") {
       const order = await Order.insert(tx);
       if (order !== undefined) {

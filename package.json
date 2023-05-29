@@ -6,6 +6,7 @@
     "prepare": "husky install",
     "build": "tsc",
     "start": "DEBUG=sado-* ts-node-dev ./src/main.ts",
+    "worker": "DEBUG=sado-* ts-node ./src/worker.ts",
     "clean": "rm -rf dist",
     "lint": "eslint --fix --ext .ts src"
   },
@@ -44,6 +45,7 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.2.1",
     "prettier": "^2.8.8",
+    "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.0.4"
   },
