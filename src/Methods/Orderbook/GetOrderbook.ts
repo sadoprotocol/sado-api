@@ -45,7 +45,7 @@ export async function getOrderbookByAddress(address: string, network: Network): 
         price: new PriceList(),
       },
     },
-    collections: await getCollections(),
+    collections: await getCollections(address),
     pending: {
       orders: [],
       offers: [],

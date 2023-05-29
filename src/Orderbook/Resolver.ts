@@ -39,7 +39,7 @@ export async function resolveOrderbook(address: string, network: Network): Promi
   const nextTxs = await addOrderbookTransactions(sadoTxs, address, network);
   for (const tx of nextTxs) {
     if (tx.type === "collection") {
-      await addCollection(tx.cid);
+      await addCollection(tx);
     }
     if (tx.type === "order") {
       const order = await Order.insert(tx);
