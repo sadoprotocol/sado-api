@@ -9,7 +9,11 @@ export const collection = db.collection<IPFSDocument>("ipfs");
  */
 
 export async function setIPFS(document: IPFSDocument): Promise<void> {
-  await collection.insertOne(document);
+  try {
+    await collection.insertOne(document);
+  } catch (err) {
+    // ...
+  }
 }
 
 export async function getIPFS(cid: string): Promise<IPFSDocument | undefined> {

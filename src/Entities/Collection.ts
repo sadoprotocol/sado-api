@@ -19,7 +19,8 @@ export async function addCollection(cid: string): Promise<void> {
   }
   document.banner = banner.img;
   document.cover = cover.img;
-  await collection.updateOne({ cid }, { $set: document }, { upsert: true });
+  await collection.deleteOne({ cid });
+  await collection.insertOne(document);
 }
 
 export async function getCollections(): Promise<IPFSCollection[]> {
