@@ -44,12 +44,21 @@ jobs:
 
       - name: Notify
         id: slack
-        uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 # v1.24.0
+        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # v1.23.0
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
         with:
           payload: |
             {
-              "title": "Sado API New Release: ${{ github.event.release.name }}",
-              "content": "Release Version: ${{ github.event.release.name }}\nRelease Notes: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.event.release.tag_name }}"
+              "text": "Sado API Released: ${{ github.event.release.name }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Sado API Released\nRelease Version: ${{ github.event.release.name }}\nRelease Notes: https://github.com/cakespecial/sado-api/releases/tag/${{ github.event.release.tag_name }}"
+                  }
+                }
+              ]
             }
