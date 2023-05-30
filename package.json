@@ -13,7 +13,8 @@
   "dependencies": {
     "@fastify/cors": "^8.2.1",
     "@fastify/helmet": "^10.1.1",
-    "bitcoinjs-lib": "6.1.0",
+    "bitcoinjs-lib": "6.1.1",
+    "bitcoinjs-message": "^2.2.0",
     "bullmq": "^3.13.3",
     "computed-types": "^1.11.2",
     "debug": "~4.3.4",

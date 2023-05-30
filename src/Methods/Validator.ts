@@ -14,7 +14,4 @@ export const validator = {
       "Expected value to be a valid utxo location in format of txid:vout"
     ),
   },
-  btc: {
-    address: string.regexp(/^(1|3)[a-km-zA-HJ-NP-Z1-9]{25,34}$/).error("Expected value to be a valid bitcoin address"),
-  },
 };

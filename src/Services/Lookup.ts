@@ -124,12 +124,12 @@ async function get(path: string, data: unknown, network: Network): Promise<any> 
     requestObject.method = "POST";
   }
 
-  log("looking up '%s' '%o'", path, data);
+  log("looking up '%s' '%o'", path, { ...(data ?? {}), network });
 
   const response = await fetch(url, requestObject);
   if (response.status === 200) {
     const json = await response.json();
-    if (json.success === true) {
+    if (json.success === true && json.rdata !== false) {
       return json.rdata;
     }
   }

@@ -1,6 +1,7 @@
 import "./Methods/Orderbook";
 import "./Methods/Order";
 import "./Methods/Offer";
+import "./Methods/Transaction";
 
 import debug from "debug";
 
