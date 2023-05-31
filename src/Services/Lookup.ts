@@ -1,8 +1,8 @@
 import debug from "debug";
 import fetch, { RequestInit } from "node-fetch";
 
+import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Collections/Transaction";
 import { config } from "../Config";
-import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Entities/Transaction";
 import { DEFAULT_NETWORK, Network } from "../Libraries/Network";
 
 const log = debug("sado-lookup");
@@ -34,11 +34,7 @@ export class Lookup {
     if (cachedUnspents !== undefined) {
       return cachedUnspents;
     }
-    const unspents = await get(
-      "/unspents",
-      { address, options: { noord: true, nohex: true, nowitness: true } },
-      this.network
-    );
+    const unspents = await get("/unspents", { address, options: { nohex: true, nowitness: true } }, this.network);
     if (unspents === undefined) {
       return [];
     }

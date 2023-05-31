@@ -1,23 +1,23 @@
 import Schema, { string } from "computed-types";
 
-import { getCollections } from "../../Entities/Collection";
-import { IPFSCollection } from "../../Entities/IPFS";
-import { Offer } from "../../Entities/Offer";
-import { Order } from "../../Entities/Order";
-import { hasWorker } from "../../Entities/Worker";
-import { method } from "../../JsonRpc/Method";
+import { OffersAnalytics } from "../../Analytics/OffersAnalytics";
+import { OrdersAnalytics } from "../../Analytics/OrdersAnalytics";
+import { getCollections } from "../../Collections/Collection";
+import { IPFSCollection } from "../../Collections/IPFS";
+import { Offer } from "../../Collections/Offer";
+import { Order } from "../../Collections/Order";
+import { hasWorker } from "../../Collections/Worker";
+import { method } from "../../Libraries/JsonRpc/Method";
 import { DEFAULT_NETWORK, Network } from "../../Libraries/Network";
 import { PriceList } from "../../Libraries/PriceList";
 import { OrderbookAnalytics } from "../../Orderbook/Analytics";
-import { OffersAnalytics } from "../../Orderbook/Analytics/OffersAnalytics";
-import { OrdersAnalytics } from "../../Orderbook/Analytics/OrdersAnalytics";
 import { resolveOrderbook } from "../../Orderbook/Resolver";
-import { validator } from "../Validator";
+import { validate } from "../../Validators";
 
 export const getOrderbook = method({
   params: Schema({
     address: string,
-    network: validator.network.optional(),
+    network: validate.schema.network.optional(),
   }),
   handler: async ({ address, network = DEFAULT_NETWORK }): Promise<Orderbook> => {
     return getOrderbookByAddress(address, network);

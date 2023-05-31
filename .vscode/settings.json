@@ -33,13 +33,16 @@
     "satoshi",
     "satoshis",
     "sats",
+    "segwit",
     "tinysecp",
     "txid",
     "txinwitness",
+    "unspents",
     "upserted",
     "utxo",
     "utxos",
     "vout",
+    "vouts",
     "vsize",
     "wpkh"
   ]

@@ -1,14 +1,15 @@
 import * as btc from "bitcoinjs-lib";
 import Schema, { number, string } from "computed-types";
 
-import { method } from "../../JsonRpc/Method";
+import { method } from "../../Libraries/JsonRpc/Method";
 import { Lookup } from "../../Services/Lookup";
-import { Address, getBitcoinAddress, getBitcoinNetwork } from "../../Utilities/Bitcoin";
-import { validator } from "../Validator";
+import { utils } from "../../Utilities";
+import type { Address } from "../../Utilities/Bitcoin";
+import { validate } from "../../Validators";
 
 export const createPartialTransaction = method({
   params: Schema({
-    network: validator.network,
+    network: validate.schema.network,
     senderAddress: string,
     receiverAddress: string,
     amount: number,
@@ -18,8 +19,9 @@ export const createPartialTransaction = method({
     const [sender, receive] = getAddresses(params.senderAddress, params.receiverAddress);
 
     const lookup = new Lookup(params.network);
+    const network = utils.bitcoin.getBitcoinNetwork(params.network);
     const utxos = await lookup.getUnspents(sender.address);
-    const psbt = new btc.Psbt({ network: getBitcoinNetwork(params.network) });
+    const psbt = new btc.Psbt({ network });
 
     utxos.sort((a, b) => a.sats - b.sats);
 
@@ -34,7 +36,7 @@ export const createPartialTransaction = method({
         hash: txid,
         index: n,
         witnessUtxo: {
-          script: btc.address.toOutputScript(sender.address, getBitcoinNetwork(params.network)),
+          script: btc.address.toOutputScript(sender.address, network),
           value: sats,
         },
       });
@@ -65,12 +67,12 @@ export const createPartialTransaction = method({
 });
 
 function getAddresses(senderAddress: string, receiverAddress: string): [Address, Address] {
-  const sender = getBitcoinAddress(senderAddress);
+  const sender = utils.bitcoin.getBitcoinAddress(senderAddress);
   if (sender === undefined) {
     throw new Error("Invalid sender address");
   }
 
-  const receiver = getBitcoinAddress(receiverAddress);
+  const receiver = utils.bitcoin.getBitcoinAddress(receiverAddress);
   if (receiver === undefined) {
     throw new Error("Invalid receiver address");
   }

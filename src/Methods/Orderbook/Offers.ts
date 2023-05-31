@@ -1,17 +1,17 @@
 import Schema, { string } from "computed-types";
 
-import { Offer } from "../../Entities/Offer";
-import { method } from "../../JsonRpc/Method";
+import { Offer } from "../../Collections/Offer";
+import { method } from "../../Libraries/JsonRpc/Method";
 import { DEFAULT_NETWORK } from "../../Libraries/Network";
-import { validator } from "../Validator";
+import { validate } from "../../Validators";
 
 export const getOrderbookOffers = method({
   params: Schema({
     address: string,
-    network: validator.network.optional(),
+    network: validate.schema.network.optional(),
     filter: Schema({
-      status: validator.ipfs.status.optional(),
-      "order.type": validator.ipfs.type.optional(),
+      status: validate.schema.status.optional(),
+      "order.type": validate.schema.type.optional(),
     }).optional(),
   }),
   handler: async ({ address, filter, network = DEFAULT_NETWORK }): Promise<Offer[]> => {

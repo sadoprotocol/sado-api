@@ -1,22 +1,20 @@
 import moment from "moment";
 import type { Filter, ObjectId, WithId } from "mongodb";
 
-import { Network } from "../Libraries/Network";
-import { PriceList } from "../Libraries/PriceList";
-import { getTypeMap } from "../Libraries/Response";
-import { getAddressVoutValue, getUTXOState, parseLocation } from "../Libraries/Transaction";
-import { IPFSLookupFailed } from "../Orderbook/Exceptions/GeneralExceptions";
 import {
   OrderFulfilledException,
   OrderInvalidMaker,
   OrderTransactionNotFound,
   OrderVoutNotFound,
   OrdinalsTransactedExternally,
-} from "../Orderbook/Exceptions/OrderException";
-import { getAskingPrice } from "../Orderbook/Utilities";
+} from "../Exceptions/OrderException";
+import { Network } from "../Libraries/Network";
+import { PriceList } from "../Libraries/PriceList";
+import { getTypeMap } from "../Libraries/Response";
 import { ipfs } from "../Services/IPFS";
 import { Lookup } from "../Services/Lookup";
 import { db } from "../Services/Mongo";
+import { utils } from "../Utilities";
 import { IPFSOrder } from "./IPFS";
 import { Offer } from "./Offer";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
@@ -101,7 +99,6 @@ export class Order {
   static async insert(tx: Transaction): Promise<Order | undefined> {
     const order = await ipfs.getOrder(tx.cid);
     if ("error" in order) {
-      await collection.insertOne(makeRejectedOrder(tx, new IPFSLookupFailed(tx.txid, order.error, order.data)));
       return;
     }
     const result = await collection.insertOne(makePendingOrder(tx, order));
@@ -241,7 +238,7 @@ export class Order {
       },
       ago: moment(this.time.block).fromNow(), // [TODO] Deprecate in favor of `time.ago`.
       value: new PriceList(this.value ?? 0),
-      price: new PriceList(getAskingPrice(this.order)),
+      price: new PriceList(utils.order.getPrice(this.order)),
       offers: this.offers,
       buy: orderTypeMap.buy,
       sell: orderTypeMap.sell,
@@ -277,7 +274,7 @@ export class Order {
  * @param lookup   - Lookup instance to use for network lookups.
  */
 async function getOrdinalVout(location: string, maker: string, lookup: Lookup): Promise<Vout> {
-  const [txid, n] = parseLocation(location);
+  const [txid, n] = utils.parse.location(location);
 
   const tx = await lookup.getTransaction(txid);
   if (tx === undefined) {
@@ -330,8 +327,8 @@ async function getOffers(cid: string): Promise<OrderOffers> {
  * @param location - Location of the order ordinal transaction.
  */
 async function getTaker(location: string, offers: OrderOffers, lookup: Lookup): Promise<OrderTaker | undefined> {
-  const [txid, voutN] = parseLocation(location);
-  const { address, spent } = await getUTXOState(txid, voutN, lookup);
+  const [txid, voutN] = utils.parse.location(location);
+  const { address, spent } = await utils.utxo.getSpentState(txid, voutN, lookup);
   if (spent === true) {
     const tx = await getSpentTransaction(address, txid, lookup);
     if (tx !== undefined) {
@@ -381,7 +378,7 @@ function makePendingOrder(tx: Transaction, order: IPFSOrder): OrderDocument {
     address: tx.from,
     network: tx.network,
     order,
-    value: getAddressVoutValue(tx, tx.from),
+    value: utils.transaction.getAddressOutputValue(tx, tx.from),
     offers: {
       count: 0,
       list: [],
@@ -391,26 +388,6 @@ function makePendingOrder(tx: Transaction, order: IPFSOrder): OrderDocument {
       order: order.ts,
     },
     tx,
-  };
-}
-
-function makeRejectedOrder(tx: Transaction, rejection: any, order?: IPFSOrder): any {
-  return {
-    status: "rejected",
-    address: tx.from,
-    network: tx.network,
-    order,
-    value: getAddressVoutValue(tx, tx.from),
-    offers: {
-      count: 0,
-      list: [],
-    },
-    time: {
-      block: tx.blocktime,
-      order: 0,
-    },
-    tx,
-    rejection,
   };
 }
 

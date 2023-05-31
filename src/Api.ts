@@ -16,7 +16,7 @@ import {
   RpcError,
   SuccessResponse,
   validateRequest,
-} from "./JsonRpc";
+} from "./Libraries/JsonRpc";
 
 const log = debug("sado-api");
 

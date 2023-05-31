@@ -3,13 +3,11 @@ import type { Filter, ObjectId, WithId } from "mongodb";
 
 import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
-import { getAddressVoutValue } from "../Libraries/Transaction";
-import { IPFSLookupFailed } from "../Orderbook/Exceptions/GeneralExceptions";
-import { getAskingPrice, utils } from "../Orderbook/Utilities";
-import { validator } from "../Orderbook/Validator";
 import { ipfs } from "../Services/IPFS";
 import { Lookup } from "../Services/Lookup";
 import { db } from "../Services/Mongo";
+import { utils } from "../Utilities";
+import { validate } from "../Validators";
 import { IPFSOffer, IPFSOrder } from "./IPFS";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
 
@@ -104,12 +102,10 @@ export class Offer {
   static async insert(tx: Transaction, lookup: Lookup): Promise<Offer | undefined> {
     const offer = await ipfs.getOffer(tx.cid);
     if ("error" in offer) {
-      await collection.insertOne(makeRejectedOffer(tx, new IPFSLookupFailed(tx.txid, offer.error, offer.data)));
       return;
     }
     const order = await ipfs.getOrder(offer.origin);
     if ("error" in order) {
-      await collection.insertOne(makeRejectedOffer(tx, new IPFSLookupFailed(tx.txid, order.error, order.data), offer));
       return;
     }
     const fee = await getTransactioFee(offer.offer, lookup);
@@ -172,7 +168,7 @@ export class Offer {
 
   async resolve(lookup: Lookup): Promise<void> {
     try {
-      await validator.offer.validate(this.offer, this.order, lookup);
+      await validate.offer(this.offer, this.order, lookup);
     } catch (error) {
       await this.setRejected(error);
     }
@@ -214,7 +210,7 @@ export class Offer {
       fee: new PriceList(this.fee),
       order: {
         ...this.order,
-        price: new PriceList(getAskingPrice(this.order)),
+        price: new PriceList(utils.order.getPrice(this.order)),
       },
       reason: undefined as string | undefined,
       proof: undefined as string | undefined,
@@ -252,29 +248,13 @@ function makePendingOffer(tx: Transaction, order: IPFSOrder, offer: IPFSOffer, f
     network: tx.network,
     order,
     offer,
-    value: getAddressVoutValue(tx, tx.from),
+    value: utils.transaction.getAddressOutputValue(tx, tx.from),
     time: {
       block: tx.blocktime,
       offer: offer.ts,
     },
     fee,
     tx,
-  };
-}
-
-function makeRejectedOffer(tx: Transaction, rejection: any, offer?: IPFSOffer): any {
-  return {
-    status: "rejected",
-    address: tx.from,
-    network: tx.network,
-    offer,
-    value: getAddressVoutValue(tx, tx.from),
-    time: {
-      block: tx.blocktime,
-      offer: 0,
-    },
-    tx,
-    rejection,
   };
 }
 

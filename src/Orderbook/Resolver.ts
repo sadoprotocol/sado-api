@@ -1,14 +1,14 @@
 import debug from "debug";
 
-import { addCollection } from "../Entities/Collection";
-import { Offer } from "../Entities/Offer";
-import { Order } from "../Entities/Order";
-import { addOrderbookTransactions, Transaction } from "../Entities/Transaction";
-import { addWorker } from "../Entities/Worker";
+import { addCollection } from "../Collections/Collection";
+import { Offer } from "../Collections/Offer";
+import { Order } from "../Collections/Order";
+import { addOrderbookTransactions, Transaction } from "../Collections/Transaction";
+import { addWorker } from "../Collections/Worker";
 import { Network } from "../Libraries/Network";
 import { Lookup } from "../Services/Lookup";
 import { sendOfferNotification, sendOrderNotification } from "../Services/Notification";
-import { parseSado } from "./Utilities";
+import { utils } from "../Utilities";
 
 const log = debug("sado-resolver");
 
@@ -105,7 +105,7 @@ function getSadoTransactions(txs: Transaction[]): Transaction[] {
   const sadoTxs = [];
   for (const tx of txs) {
     for (const vout of tx.vout) {
-      const sado = parseSado(vout.scriptPubKey.utf8);
+      const sado = utils.parse.sado(vout.scriptPubKey.utf8);
       if (sado !== undefined) {
         tx.type = sado.type;
         tx.cid = sado.cid;

@@ -1,7 +1,7 @@
 import * as btc from "bitcoinjs-lib";
 
-import { btcToSat } from "../../Libraries/Bitcoin";
-import { Lookup } from "../../Services/Lookup";
+import { Lookup } from "../Services/Lookup";
+import { bitcoin } from "./Bitcoin";
 
 export const psbt = {
   decode,
@@ -9,23 +9,23 @@ export const psbt = {
 };
 
 /**
- * Attempt to retrieve a PSBT from the offer string. We try both hex and base64
+ * Attempt to retrieve a PSBT from the psbt string. We try both hex and base64
  * formats as we don't know which one the user will provide.
  *
- * @param offer - Encoded offer transaction.
+ * @param psbt - Encoded psbt.
  *
  * @returns The PSBT or undefined if it could not be parsed.
  */
-function decode(offer: string): btc.Psbt | undefined {
+function decode(psbt: string): btc.Psbt | undefined {
   try {
-    return btc.Psbt.fromHex(offer);
+    return btc.Psbt.fromHex(psbt);
   } catch (err) {
     // TODO: Add better check in case the error is not about failure to
     //       parse the hex.
     // not a PSBT hex offer
   }
   try {
-    return btc.Psbt.fromBase64(offer);
+    return btc.Psbt.fromBase64(psbt);
   } catch (err) {
     // TODO: Add better check in case the error is not about failure to
     //       parse the base64.
@@ -48,7 +48,7 @@ async function getFee(psbt: btc.Psbt, lookup: Lookup): Promise<number> {
     const hash = input.hash.reverse().toString("hex");
     const tx = await lookup.getTransaction(hash);
     if (tx !== undefined) {
-      inputSum += btcToSat(tx.vout[input.index].value);
+      inputSum += bitcoin.btcToSat(tx.vout[input.index].value);
     }
   }
 

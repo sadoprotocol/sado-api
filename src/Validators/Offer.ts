@@ -1,18 +1,13 @@
 import * as btc from "bitcoinjs-lib";
 
-import { IPFSOffer, IPFSOrder } from "../../../Entities/IPFS";
-import { Order } from "../../../Entities/Order";
-import { parseLocation } from "../../../Libraries/Transaction";
-import { Lookup } from "../../../Services/Lookup";
-import { OfferValidationFailed } from "../../Exceptions/OfferException";
-import { OrderClosed } from "../../Exceptions/OrderException";
-import { utils } from "../../Utilities";
+import { IPFSOffer, IPFSOrder } from "../Collections/IPFS";
+import { Order } from "../Collections/Order";
+import { OfferValidationFailed } from "../Exceptions/OfferException";
+import { OrderClosed } from "../Exceptions/OrderException";
+import { Lookup } from "../Services/Lookup";
+import { utils } from "../Utilities";
 
-export const offer = {
-  validate,
-};
-
-async function validate(offer: IPFSOffer, order: IPFSOrder, lookup: Lookup): Promise<void> {
+export async function offer(offer: IPFSOffer, order: IPFSOrder, lookup: Lookup): Promise<void> {
   await hasValidOrder(order.cid);
   await hasValidOffer(offer, order, lookup);
 }
@@ -38,7 +33,7 @@ async function hasValidOffer({ offer }: IPFSOffer, order: IPFSOrder, lookup: Loo
 }
 
 async function validateMakerInput(psbt: btc.Psbt, location: string): Promise<void> {
-  const [txid, vout] = parseLocation(location);
+  const [txid, vout] = utils.parse.location(location);
   const [input, index] = getOrderLocationInput(psbt, txid, vout);
   if (input === false) {
     throw new OfferValidationFailed("Order utxo is not present in the offer transaction", {

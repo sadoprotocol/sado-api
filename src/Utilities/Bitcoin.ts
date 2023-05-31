@@ -7,9 +7,9 @@ export const BTC_TO_SAT = 1e8;
 
 const addressFormats = {
   mainnet: {
-    p2pkh: /^[1][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
-    p2sh: /^[3][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
-    bech32: /^(bc1)[a-zA-HJ-NP-Z0-9]{39,58}$/,
+    p2pkh: /^[1][a-km-zA-HJ-NP-Z1-9]{25,34}$/, // legacy
+    p2sh: /^[3][a-km-zA-HJ-NP-Z1-9]{25,34}$/, // segwit
+    bech32: /^(bc1)[a-zA-HJ-NP-Z0-9]{39,58}$/, // bech32
   },
   other: {
     p2pkh: /^[mn][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
@@ -18,14 +18,35 @@ const addressFormats = {
   },
 } as const;
 
-export function getBitcoinNetwork(value: Network): btc.Network {
+/*
+ |--------------------------------------------------------------------------------
+ | Utilities
+ |--------------------------------------------------------------------------------
+ */
+
+export const bitcoin = {
+  getBitcoinNetwork,
+  getBitcoinAddress,
+  getAddressFromPubKey,
+  satToBtc,
+  btcToSat,
+  btcToUsd,
+};
+
+/*
+ |--------------------------------------------------------------------------------
+ | Method
+ |--------------------------------------------------------------------------------
+ */
+
+function getBitcoinNetwork(value: Network): btc.Network {
   if (value === "mainnet") {
     return btc.networks.bitcoin;
   }
   return btc.networks[value];
 }
 
-export function getBitcoinAddress(value: string): Address | undefined {
+function getBitcoinAddress(value: string): Address | undefined {
   for (const network of Object.keys(addressFormats) as ["mainnet", "other"]) {
     if (addressFormats[network].p2pkh.test(value)) {
       return {
@@ -48,11 +69,7 @@ export function getBitcoinAddress(value: string): Address | undefined {
   }
 }
 
-export function getAddressFromPubKey(
-  pubkey: string,
-  format: Address["type"],
-  network: btc.Network
-): string | undefined {
+function getAddressFromPubKey(pubkey: string, format: Address["type"], network: btc.Network): string | undefined {
   const publicKeyBuffer = Buffer.from(pubkey, "hex");
   switch (format) {
     case "p2sh": {
@@ -73,15 +90,15 @@ export function getAddressFromPubKey(
   }
 }
 
-export function btcToSat(btc: number): number {
-  return Math.floor(btc * BTC_TO_SAT);
-}
-
-export function satToBtc(sat: number): number {
+function satToBtc(sat: number): number {
   return sat / BTC_TO_SAT;
 }
 
-export function btcToUsd(btc: number): number {
+function btcToSat(btc: number): number {
+  return Math.floor(btc * BTC_TO_SAT);
+}
+
+function btcToUsd(btc: number): number {
   return btc * dexPrices.usd;
 }
 

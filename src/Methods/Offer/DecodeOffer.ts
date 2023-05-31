@@ -1,9 +1,9 @@
 import Schema, { string } from "computed-types";
 
-import { BadRequestError, NotFoundError } from "../../JsonRpc";
-import { method } from "../../JsonRpc/Method";
-import { utils } from "../../Orderbook/Utilities";
+import { BadRequestError, NotFoundError } from "../../Libraries/JsonRpc";
+import { method } from "../../Libraries/JsonRpc/Method";
 import { ipfs } from "../../Services/IPFS";
+import { utils } from "../../Utilities";
 
 export const decodeOffer = method({
   params: Schema({

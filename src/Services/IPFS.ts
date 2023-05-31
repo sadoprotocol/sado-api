@@ -2,7 +2,7 @@ import debug from "debug";
 import fetch from "node-fetch";
 
 import { config } from "../Config";
-import { getIPFS, IPFSCollection, IPFSImage, IPFSOffer, IPFSOrder, setIPFS } from "../Entities/IPFS";
+import { getIPFS, IPFSCollection, IPFSImage, IPFSOffer, IPFSOrder, setIPFS } from "../Collections/IPFS";
 import { makeObjectKeyChecker } from "../Libraries/Object";
 
 const log = debug("sado-ipfs");

@@ -1,6 +1,6 @@
 import debug from "debug";
 
-import { getWorkers } from "./Entities/Worker";
+import { getWorkers } from "./Collections/Worker";
 import { resolveOrderbook } from "./Orderbook/Resolver";
 
 const log = debug("sado-worker");

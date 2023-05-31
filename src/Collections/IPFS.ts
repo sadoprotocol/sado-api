@@ -35,11 +35,10 @@ export type IPFSOrder = {
   type: OrderType;
   location: string;
   maker: string;
-  satoshis?: string;
   cardinals?: string;
   satoshi?: string;
-  orderbooks?: string[];
   meta?: Record<string, unknown>;
+  orderbooks?: string[];
   signature: string;
   signature_format?: string;
   desc?: string;

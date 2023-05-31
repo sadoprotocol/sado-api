@@ -1,6 +1,6 @@
-import { IPFSOrder } from "../../Entities/IPFS";
-import { PriceList } from "../../Libraries/PriceList";
-import { getAskingPrice } from "../Utilities";
+import { IPFSOrder } from "../Collections/IPFS";
+import { PriceList } from "../Libraries/PriceList";
+import { utils } from "../Utilities";
 import { Collections } from "./Collections";
 
 export class OffersAnalytics {
@@ -31,7 +31,7 @@ export class OffersAnalytics {
   }
 
   addPending(order: IPFSOrder, value: number) {
-    const price = getAskingPrice(order);
+    const price = utils.order.getPrice(order);
     this.#collections.addCollection(order, price);
     this.addTotal(price, value);
     this.#pending.count += 1;
@@ -40,7 +40,7 @@ export class OffersAnalytics {
   }
 
   addCompleted(order: IPFSOrder, value: number) {
-    const price = getAskingPrice(order);
+    const price = utils.order.getPrice(order);
     this.addTotal(price, value);
     this.#completed.count += 1;
     this.#completed.value.increment(value);
