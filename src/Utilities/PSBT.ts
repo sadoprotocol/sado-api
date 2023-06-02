@@ -6,6 +6,7 @@ import { bitcoin } from "./Bitcoin";
 export const psbt = {
   decode,
   getFee,
+  getEstimatedFee,
 };
 
 /**
@@ -31,6 +32,35 @@ function decode(psbt: string): btc.Psbt | undefined {
     //       parse the base64.
     // not a PSBT base64 offer
   }
+}
+
+/**
+ * Make sure to add a higher fee rate if the blockchain is congested.
+ *
+ * @param psbt    - Psbt to estimate fee for.
+ * @param feeRate - Fee rate in satoshis per byte. Default: 10
+ *
+ * @returns Estimated fee in satoshis.
+ */
+function getEstimatedFee(psbt: btc.Psbt, feeRate = 10): number {
+  let base = 0;
+  let virtual = 0;
+
+  for (const input of psbt.data.inputs) {
+    console.log(input);
+    if (input.witnessUtxo !== undefined) {
+      base += 180;
+    } else {
+      base += 41;
+      virtual += 108;
+    }
+  }
+
+  base += 34 * psbt.txOutputs.length + 34; // outputs are the same size no matter segwit or not, include the change output
+  base += 10; // 10 extra bytes for version, locktime, etc.
+  virtual += Math.ceil((base + virtual) / 4); // virtual size is base for non-segwit data plus 1/4 of segwit data
+
+  return virtual * feeRate;
 }
 
 /**

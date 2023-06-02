@@ -13,6 +13,8 @@
   "dependencies": {
     "@fastify/cors": "^8.2.1",
     "@fastify/helmet": "^10.1.1",
+    "bip32": "^4.0.0",
+    "bip39": "^3.1.0",
     "bitcoinjs-lib": "6.1.1",
     "bitcoinjs-message": "^2.2.0",
     "bullmq": "^3.13.3",
@@ -24,6 +26,8 @@
     "moment": "^2.29.4",
     "mongodb": "^5.3.0",
     "node-fetch": "^2.6.9",
+    "tiny-secp256k1": "^2.2.1",
+    "wif": "^2.0.6",
     "ws": "^8.13.0"
   },
   "devDependencies": {
@@ -32,6 +36,7 @@
     "@types/http-errors": "^2.0.1",
     "@types/node": "^18.15.12",
     "@types/node-fetch": "^2.6.3",
+    "@types/wif": "^2.0.2",
     "@types/ws": "^8.5.4",
     "@typescript-eslint/eslint-plugin": "^5.59.0",
     "@typescript-eslint/parser": "^5.59.0",

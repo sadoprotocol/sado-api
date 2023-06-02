@@ -9,12 +9,14 @@ const addressFormats = {
   mainnet: {
     p2pkh: /^[1][a-km-zA-HJ-NP-Z1-9]{25,34}$/, // legacy
     p2sh: /^[3][a-km-zA-HJ-NP-Z1-9]{25,34}$/, // segwit
-    bech32: /^(bc1)[a-zA-HJ-NP-Z0-9]{39,58}$/, // bech32
+    bech32: /^(bc1[qp])[a-zA-HJ-NP-Z0-9]{14,74}$/, // bech32
+    taproot: /^(bc1p)[a-zA-HJ-NP-Z0-9]{14,74}$/, // taproot
   },
   other: {
     p2pkh: /^[mn][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
     p2sh: /^[2][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
-    bech32: /^(tb1|bcrt1)[a-zA-HJ-NP-Z0-9]{39,58}$/,
+    bech32: /^(tb1[qp]|bcrt1[qp])[a-zA-HJ-NP-Z0-9]{14,74}$/,
+    taproot: /^(tb1p|bcrt1p)[a-zA-HJ-NP-Z0-9]{14,74}$/,
   },
 } as const;
 
@@ -66,6 +68,12 @@ function getBitcoinAddress(value: string): Address | undefined {
         type: "bech32",
       };
     }
+    if (addressFormats[network].taproot.test(value)) {
+      return {
+        address: value,
+        type: "taproot",
+      };
+    }
   }
 }
 
@@ -104,5 +112,5 @@ function btcToUsd(btc: number): number {
 
 export type Address = {
   address: string;
-  type: "p2pkh" | "p2sh" | "bech32";
+  type: "p2pkh" | "p2sh" | "bech32" | "taproot";
 };

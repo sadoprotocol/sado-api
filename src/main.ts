@@ -2,6 +2,7 @@ import "./Methods/Orderbook";
 import "./Methods/Order";
 import "./Methods/Offer";
 import "./Methods/Transaction";
+import "./Methods/Taproot";
 
 import debug from "debug";
 

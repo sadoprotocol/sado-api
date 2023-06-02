@@ -23,6 +23,7 @@
     "ecpair",
     "fastify",
     "ipfs",
+    "keypool",
     "locktime",
     "orderbooks",
     "psbt",
@@ -44,6 +45,7 @@
     "vout",
     "vouts",
     "vsize",
+    "watchonly",
     "wpkh"
   ]
 }

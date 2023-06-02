@@ -142,7 +142,7 @@ type Balance = {
   value: string;
 };
 
-type Unspent = {
+export type Unspent = {
   txid: string;
   n: number;
   txHash: string;

@@ -4,6 +4,7 @@ import { order } from "./Order";
 import { parse } from "./Parse";
 import { psbt } from "./PSBT";
 import { raw } from "./Raw";
+import { taproot } from "./Taproot";
 import { transaction } from "./Transaction";
 import { utxo } from "./Utxo";
 
@@ -14,6 +15,7 @@ export const utils = {
   parse,
   psbt,
   raw,
+  taproot,
   transaction,
   utxo,
 };

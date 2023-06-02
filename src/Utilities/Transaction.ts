@@ -1,10 +1,14 @@
+import * as btc from "bitcoinjs-lib";
+
 import type { Transaction, Vout } from "../Collections/Transaction";
-import { Lookup } from "../Services/Lookup";
-import { BTC_TO_SAT } from "./Bitcoin";
+import { BadRequestError } from "../Libraries/JsonRpc";
+import { Lookup, Unspent } from "../Services/Lookup";
+import { bitcoin, BTC_TO_SAT } from "./Bitcoin";
 
 export const transaction = {
   getAddressOutputValue,
   getTransactionVout,
+  addPsbtInputs,
 };
 
 /**
@@ -43,4 +47,24 @@ async function getTransactionVout(txid: string, vout: number, lookup: Lookup): P
     return undefined;
   }
   return tx.vout[vout];
+}
+
+function addPsbtInputs(psbt: btc.Psbt, amount: number, address: string, utxos: Unspent[], network: btc.Network) {
+  let total = 0;
+  for (const utxo of utxos) {
+    const { txid, n, sats } = utxo;
+    psbt.addInput({
+      hash: txid,
+      index: n,
+      witnessUtxo: {
+        script: btc.address.toOutputScript(address, network),
+        value: sats,
+      },
+    });
+    total += sats;
+    if (total >= amount) {
+      return total;
+    }
+  }
+  throw new BadRequestError("Spending address does not have enough funds");
 }

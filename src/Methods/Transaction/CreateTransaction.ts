@@ -1,6 +1,7 @@
 import * as btc from "bitcoinjs-lib";
 import Schema, { number, string } from "computed-types";
 
+import { BadRequestError } from "../../Libraries/JsonRpc";
 import { method } from "../../Libraries/JsonRpc/Method";
 import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
@@ -10,58 +11,54 @@ import { validate } from "../../Validators";
 export const createPartialTransaction = method({
   params: Schema({
     network: validate.schema.network,
-    senderAddress: string,
-    receiverAddress: string,
+    sender: string,
+    receiver: string,
     amount: number,
-    fee: number,
+    feeRate: number,
+    taproot: Schema({
+      seed: string,
+    }),
   }),
   handler: async (params) => {
-    const [sender, receive] = getAddresses(params.senderAddress, params.receiverAddress);
+    const [sender, receiver] = getAddresses(params.sender, params.receiver);
 
     const lookup = new Lookup(params.network);
     const network = utils.bitcoin.getBitcoinNetwork(params.network);
+    const amount = params.amount;
     const utxos = await lookup.getUnspents(sender.address);
     const psbt = new btc.Psbt({ network });
 
     utxos.sort((a, b) => a.sats - b.sats);
 
-    console.log(utxos);
-
     let total = 0;
-
-    for (const utxo of utxos) {
-      const { txid, n, sats } = utxo;
-
-      psbt.addInput({
-        hash: txid,
-        index: n,
-        witnessUtxo: {
-          script: btc.address.toOutputScript(sender.address, network),
-          value: sats,
-        },
-      });
-
-      total += sats;
-
-      if (total >= params.amount - params.fee) {
-        break;
-      }
+    let signer: btc.Signer;
+    if (params.taproot !== undefined) {
+      const res = utils.taproot.addPsbtInputs(psbt, amount, utxos, params.taproot, network);
+      total = res.total;
+      signer = res.signer;
+    } else {
+      total = utils.transaction.addPsbtInputs(psbt, amount, params.sender, utxos, network);
     }
-
-    const change = total - params.amount - params.fee;
 
     psbt.addOutput({
-      address: receive.address,
-      value: params.amount,
+      address: receiver.address,
+      value: amount,
     });
 
-    if (change > 0) {
-      psbt.addOutput({
-        address: sender.address,
-        value: change,
-      });
+    const change = total - amount - utils.psbt.getEstimatedFee(psbt, params.feeRate);
+    if (change <= 0) {
+      throw new BadRequestError("Not enough funds to cover fee");
     }
 
+    psbt.addOutput({
+      address: sender.address,
+      value: change,
+    });
+
+    if (params.taproot !== undefined) {
+      console.log(psbt);
+      return psbt.signAllInputs(signer!).finalizeAllInputs().extractTransaction().toHex();
+    }
     return psbt.toBase64();
   },
 });
