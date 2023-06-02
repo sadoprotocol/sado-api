@@ -13,12 +13,12 @@ const ADDRESS_TYPE = {
 };
 
 export class Wallet {
-  #node: BIP32Interface;
   #network: btc.Network;
+  #node: BIP32Interface;
 
   constructor(key: string, network: Network) {
-    this.#node = bip32.fromBase58(key, utils.bitcoin.getBitcoinNetwork(network));
     this.#network = utils.bitcoin.getBitcoinNetwork(network);
+    this.#node = bip32.fromBase58(key, this.#network);
   }
 
   getPaymentDetails(index: number, type: AddressType): [Buffer | undefined, Buffer, btc.Signer] {
@@ -26,7 +26,10 @@ export class Wallet {
   }
 
   getSigner(index: number, type: AddressType): btc.Signer {
-    return this.#node.tweak(btc.crypto.taggedHash("TapTweak", this.getPubkey(index, type)));
+    return this.#node
+      .derive(ADDRESS_TYPE[type])
+      .derive(index)
+      .tweak(btc.crypto.taggedHash("TapTweak", this.getPubkey(index, type)));
   }
 
   getOutput(index: number, type: AddressType): Buffer | undefined {
