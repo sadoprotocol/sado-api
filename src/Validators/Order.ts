@@ -31,7 +31,6 @@ function validatePSBTSignature(signature: string, { address, type }: Address, ne
 
 function validateMessageSignature(message: string, { address }: Address, signature: string): void {
   if (btcm.verify(message, address, signature) === false) {
-    console.log(message);
     throw new BadRequestError("Message signature is invalid");
   }
 }

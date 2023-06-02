@@ -3,6 +3,7 @@ import Schema, { number, string } from "computed-types";
 
 import { BadRequestError } from "../../Libraries/JsonRpc";
 import { method } from "../../Libraries/JsonRpc/Method";
+import { Wallet } from "../../Libraries/Wallet";
 import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
 import type { Address } from "../../Utilities/Bitcoin";
@@ -16,8 +17,8 @@ export const createPartialTransaction = method({
     amount: number,
     feeRate: number,
     taproot: Schema({
-      seed: string,
-    }),
+      pubkey: string,
+    }).optional(),
   }),
   handler: async (params) => {
     const [sender, receiver] = getAddresses(params.sender, params.receiver);
@@ -33,7 +34,7 @@ export const createPartialTransaction = method({
     let total = 0;
     let signer: btc.Signer;
     if (params.taproot !== undefined) {
-      const res = utils.taproot.addPsbtInputs(psbt, amount, utxos, params.taproot, network);
+      const res = utils.taproot.addPsbtInputs(new Wallet(params.taproot.pubkey, params.network), psbt, amount, utxos);
       total = res.total;
       signer = res.signer;
     } else {
@@ -56,7 +57,6 @@ export const createPartialTransaction = method({
     });
 
     if (params.taproot !== undefined) {
-      console.log(psbt);
       return psbt.signAllInputs(signer!).finalizeAllInputs().extractTransaction().toHex();
     }
     return psbt.toBase64();

@@ -1,6 +1,8 @@
 import { api } from "../../Api";
-import { createTaprootAddress } from "./CreateTaprootAddress";
-import { recoverTaprootAddress } from "./RecoverTaprootAddress";
+import { generateMnemonic } from "./GenerateMnemonic";
+import { getAccountKey } from "./GetAccountKey";
+import { getAddress } from "./GetAddress";
 
-api.register("taproot.getAddress", createTaprootAddress);
-api.register("taproot.recoverAddress", recoverTaprootAddress);
+api.register("taproot.generateMnemonic", generateMnemonic);
+api.register("taproot.getAccountKey", getAccountKey);
+api.register("taproot.getAddress", getAddress);

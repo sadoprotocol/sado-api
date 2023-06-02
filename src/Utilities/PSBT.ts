@@ -47,7 +47,6 @@ function getEstimatedFee(psbt: btc.Psbt, feeRate = 10): number {
   let virtual = 0;
 
   for (const input of psbt.data.inputs) {
-    console.log(input);
     if (input.witnessUtxo !== undefined) {
       base += 180;
     } else {

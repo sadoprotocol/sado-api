@@ -52,7 +52,8 @@ async function getTransactionVout(txid: string, vout: number, lookup: Lookup): P
 function addPsbtInputs(psbt: btc.Psbt, amount: number, address: string, utxos: Unspent[], network: btc.Network) {
   let total = 0;
   for (const utxo of utxos) {
-    const { txid, n, sats } = utxo;
+    const { txid, n, value } = utxo;
+    const sats = bitcoin.btcToSat(value);
     psbt.addInput({
       hash: txid,
       index: n,
