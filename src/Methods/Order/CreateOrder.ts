@@ -6,7 +6,7 @@ import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
 import { validate } from "../../Validators";
 
-export const createSellOrder = method({
+export const createOrder = method({
   params: Schema({
     network: validate.schema.network,
     order: Schema({
@@ -43,19 +43,19 @@ export const createSellOrder = method({
       throw new BadRequestError("Maker validation failed");
     }
 
-    // ### Validate Signature
-    // Make sure that the order is verifiable by the API when it is received.
-
-    if (params.signature.format === "psbt") {
-      validate.order.psbt(params.signature.value, maker, network);
-    } else {
-      validate.order.message(utils.order.toHex(params.order), maker, params.signature.value);
-    }
-
     // ### Validate Location
     // Ensure that the UTXO being spent exists and is confirmed.
 
     await validateLocation(params.order.location, lookup);
+
+    // ### Validate Signature
+    // Make sure that the order is verifiable by the API when it is received.
+
+    if (params.signature.format === "psbt") {
+      validate.order.psbt(params.signature.value, params.order.location);
+    } else {
+      validate.order.message(utils.order.toHex(params.order), maker.address, params.signature.value);
+    }
 
     // ### Store Order
 

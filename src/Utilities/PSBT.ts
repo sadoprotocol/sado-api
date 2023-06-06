@@ -88,3 +88,5 @@ async function getFee(psbt: btc.Psbt, lookup: Lookup): Promise<number> {
 
   return inputSum - outputSum;
 }
+
+export type PsbtInput = btc.Psbt["data"]["inputs"][number];

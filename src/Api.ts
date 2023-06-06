@@ -97,7 +97,7 @@ class Api {
     // ### Validate Parameters
 
     if (method.validate !== undefined) {
-      const [err] = method.validate?.(request.params ?? {});
+      const [err] = method.validate(request.params ?? {});
       if (err) {
         return {
           jsonrpc: "2.0",

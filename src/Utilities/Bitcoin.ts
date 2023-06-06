@@ -30,6 +30,7 @@ export const bitcoin = {
   getBitcoinNetwork,
   getBitcoinAddress,
   getAddressFromPubKey,
+  getWifVersion,
   satToBtc,
   btcToSat,
   btcToUsd,
@@ -37,7 +38,7 @@ export const bitcoin = {
 
 /*
  |--------------------------------------------------------------------------------
- | Method
+ | Methods
  |--------------------------------------------------------------------------------
  */
 
@@ -109,6 +110,25 @@ function btcToSat(btc: number): number {
 function btcToUsd(btc: number): number {
   return btc * dexPrices.usd;
 }
+
+function getWifVersion(network: btc.Network): number {
+  switch (network) {
+    case btc.networks.bitcoin: {
+      return 0x80;
+    }
+    case btc.networks.testnet:
+    case btc.networks.regtest: {
+      return 0xef;
+    }
+  }
+  throw new Error("Cannot get WIF version for unknown wallet network");
+}
+
+/*
+ |--------------------------------------------------------------------------------
+ | Types
+ |--------------------------------------------------------------------------------
+ */
 
 export type Address = {
   address: string;

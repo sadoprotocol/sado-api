@@ -3,18 +3,20 @@ import Schema, { number, string } from "computed-types";
 
 import { BadRequestError } from "../../Libraries/JsonRpc";
 import { method } from "../../Libraries/JsonRpc/Method";
+import { Wallet } from "../../Libraries/Wallet";
 import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
 import type { Address } from "../../Utilities/Bitcoin";
 import { validate } from "../../Validators";
 
-export const createPartialTransaction = method({
+export const createTransaction = method({
   params: Schema({
     network: validate.schema.network,
     sender: string,
     receiver: string,
     amount: number,
     feeRate: number,
+    key: string,
   }),
   handler: async (params) => {
     const network = utils.bitcoin.getBitcoinNetwork(params.network);
@@ -22,6 +24,7 @@ export const createPartialTransaction = method({
 
     const lookup = new Lookup(params.network);
     const psbt = new btc.Psbt({ network });
+    const wallet = Wallet.fromPrivateKey(params.key, params.network);
 
     let total = 0;
 
@@ -33,9 +36,10 @@ export const createPartialTransaction = method({
         hash: txid,
         index: n,
         witnessUtxo: {
-          script: btc.address.toOutputScript(sender.address, network),
+          script: wallet.output,
           value: sats,
         },
+        tapInternalKey: wallet.internalPubkey,
       });
       total += sats;
       if (total >= params.amount) {
@@ -58,7 +62,7 @@ export const createPartialTransaction = method({
       value: change,
     });
 
-    return psbt.toBase64();
+    return psbt.signAllInputs(wallet.signer).finalizeAllInputs().extractTransaction().toHex();
   },
 });
 

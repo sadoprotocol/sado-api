@@ -26,6 +26,7 @@ async function hasValidOffer({ offer }: IPFSOffer, order: IPFSOrder, lookup: Loo
     await validateTransactionInputs(psbt, lookup);
     return;
   }
+
   const raw = validateRawTx(offer);
   if (raw === false) {
     throw new OfferValidationFailed("Unable to verify offer validity", { offer });

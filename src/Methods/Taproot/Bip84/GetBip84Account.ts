@@ -1,10 +1,10 @@
 import Schema, { number, string } from "computed-types";
 
-import { method } from "../../Libraries/JsonRpc";
-import { utils } from "../../Utilities";
-import { validate } from "../../Validators";
+import { method } from "../../../Libraries/JsonRpc";
+import { utils } from "../../../Utilities";
+import { validate } from "../../../Validators";
 
-export const getAccountKey = method({
+export const getBip84Account = method({
   params: Schema({
     mnemonic: string,
     account: number,
@@ -12,6 +12,6 @@ export const getAccountKey = method({
   }),
   handler: async ({ mnemonic, account, network }) => {
     const masterNode = utils.taproot.getMasterNode(mnemonic, network);
-    return utils.taproot.getAccountKey(masterNode, account);
+    return utils.taproot.getBip84Account(masterNode, account).toBase58();
   },
 });

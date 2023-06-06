@@ -7,63 +7,88 @@ import { Network } from "./Network";
 
 const bip32 = BIP32Factory(ecc);
 
-const ADDRESS_TYPE = {
-  receiving: 0,
-  change: 1,
-};
-
 export class Wallet {
-  #network: btc.Network;
   #node: BIP32Interface;
+  #network: btc.Network;
 
-  constructor(key: string, network: Network) {
-    this.#network = utils.bitcoin.getBitcoinNetwork(network);
-    this.#node = bip32.fromBase58(key, this.#network);
+  private constructor(node: BIP32Interface, network: btc.Network) {
+    this.#node = node;
+    this.#network = network;
   }
 
-  getPaymentDetails(index: number, type: AddressType): [Buffer | undefined, Buffer, btc.Signer] {
-    return [this.getOutput(index, type), this.getPubkey(index, type), this.getSigner(index, type)];
+  /*
+   |--------------------------------------------------------------------------------
+   | Factories
+   |--------------------------------------------------------------------------------
+   */
+
+  static fromBase58(key: string, network: Network): Wallet {
+    const net = utils.bitcoin.getBitcoinNetwork(network);
+    return new Wallet(bip32.fromBase58(key, net), net);
   }
 
-  getSigner(index: number, type: AddressType): btc.Signer {
-    return this.#node
-      .derive(ADDRESS_TYPE[type])
-      .derive(index)
-      .tweak(btc.crypto.taggedHash("TapTweak", this.getPubkey(index, type)));
+  static fromPrivateKey(key: string, network: Network): Wallet {
+    const net = utils.bitcoin.getBitcoinNetwork(network);
+    return new Wallet(bip32.fromPrivateKey(Buffer.from(key, "hex"), Buffer.alloc(32), net), net);
   }
 
-  getOutput(index: number, type: AddressType): Buffer | undefined {
+  static fromPublicKey(key: string, network: Network): Wallet {
+    const net = utils.bitcoin.getBitcoinNetwork(network);
+    return new Wallet(bip32.fromPublicKey(Buffer.from(key, "hex"), Buffer.alloc(32), net), net);
+  }
+
+  /*
+   |--------------------------------------------------------------------------------
+   | Accessors
+   |--------------------------------------------------------------------------------
+   */
+
+  get node(): BIP32Interface {
+    return this.#node;
+  }
+
+  get signer(): btc.Signer {
+    return this.#node.tweak(btc.crypto.taggedHash("TapTweak", this.internalPubkey));
+  }
+
+  get output(): Buffer {
     const { output } = btc.payments.p2tr({
-      internalPubkey: this.getPubkey(index, type),
+      internalPubkey: this.internalPubkey,
       network: this.#network,
     });
+    if (output === undefined) {
+      throw new Error("Failed to generate output");
+    }
     return output;
   }
 
-  getAddress(index: number, type: AddressType): string | undefined {
+  get address(): string | undefined {
     const { address } = btc.payments.p2tr({
-      internalPubkey: this.getPubkey(index, type),
+      internalPubkey: this.internalPubkey,
       network: this.#network,
     });
     return address;
   }
 
-  getPubkey(index: number, type: AddressType): Buffer {
-    return this.#node.derive(ADDRESS_TYPE[type]).derive(index).publicKey.slice(1);
+  get privateKey(): Buffer | undefined {
+    return this.#node.privateKey;
   }
 
-  getWifVersion(): number {
-    switch (this.#network) {
-      case btc.networks.bitcoin: {
-        return 0x80;
-      }
-      case btc.networks.testnet:
-      case btc.networks.regtest: {
-        return 0xef;
-      }
-    }
-    throw new Error("Cannot get WIF version for unknown wallet network");
+  get internalPubkey(): Buffer {
+    return this.publicKey.slice(1);
+  }
+
+  get publicKey(): Buffer {
+    return this.#node.publicKey;
+  }
+
+  /*
+   |--------------------------------------------------------------------------------
+   | Utilities
+   |--------------------------------------------------------------------------------
+   */
+
+  derive(path: string): Wallet {
+    return new Wallet(this.#node.derivePath(path), this.#network);
   }
 }
-
-type AddressType = "receiving" | "change";
