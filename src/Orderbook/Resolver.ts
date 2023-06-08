@@ -88,17 +88,21 @@ export async function resolveOrderbook(address: string, network: Network): Promi
  */
 
 async function resolvePendingOrders(address: string, lookup: Lookup): Promise<void> {
+  const limiter = utils.promise.limiter(10);
   const pending = await Order.getByStatus("pending", address, lookup.network);
   for (const order of pending) {
-    await order.resolve(lookup);
+    limiter.push(() => order.resolve(lookup));
   }
+  await limiter.run();
 }
 
 async function resolvePendingOffers(address: string, lookup: Lookup): Promise<void> {
+  const limiter = utils.promise.limiter(10);
   const pending = await Offer.getByStatus("pending", address, lookup.network);
   for (const offer of pending) {
-    await offer.resolve(lookup);
+    limiter.push(() => offer.resolve(lookup));
   }
+  await limiter.run();
 }
 
 function getSadoTransactions(txs: Transaction[]): Transaction[] {

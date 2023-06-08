@@ -2,6 +2,7 @@ import { bitcoin } from "./Bitcoin";
 import { input } from "./Input";
 import { order } from "./Order";
 import { parse } from "./Parse";
+import { promise } from "./Promise";
 import { psbt } from "./PSBT";
 import { raw } from "./Raw";
 import { taproot } from "./Taproot";
@@ -13,6 +14,7 @@ export const utils = {
   input,
   order,
   parse,
+  promise,
   psbt,
   raw,
   taproot,

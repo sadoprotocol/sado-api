@@ -14,6 +14,7 @@
     "blocktime",
     "btcm",
     "bullmq",
+    "CHECKSIG",
     "decompile",
     "ecpair",
     "fastify",

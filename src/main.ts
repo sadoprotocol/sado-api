@@ -1,6 +1,7 @@
-import "./Methods/Orderbook";
-import "./Methods/Order";
 import "./Methods/Offer";
+import "./Methods/Order";
+import "./Methods/Orderbook";
+import "./Methods/SegWit";
 import "./Methods/Transaction";
 import "./Methods/Taproot";
 
