@@ -9,4 +9,7 @@ export const schema = {
     "Expected value to be 'pending', 'rejected' or 'completed'"
   ),
   location: string.regexp(/^[a-f0-9]{64}:[0-9]+$/, "Expected value to be a valid utxo location in format of txid:vout"),
+  bip84: {
+    type: Schema.either("receive" as const, "change" as const).error("Expected value to be 'receive' or 'change'"),
+  },
 };

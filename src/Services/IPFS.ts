@@ -87,10 +87,10 @@ async function getCollection(cid: string): Promise<IPFSResponse<IPFSCollection>>
 async function getImage(cid: string): Promise<IPFSResponse<IPFSImage>> {
   const data = await get<IPFSImage>(cid);
   if (data === undefined) {
-    return errorResponse("Collection does not exist, or has been removed", { cid });
+    return errorResponse("Image does not exist, or has been removed", { cid });
   }
   if (hasValidImageKeys(data) === false) {
-    return errorResponse("Malformed collection", { cid });
+    return errorResponse("Malformed image", { cid });
   }
   data.cid = cid;
   return successResponse(data);

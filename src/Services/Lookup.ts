@@ -17,24 +17,60 @@ export class Lookup {
 
   constructor(readonly network: Network) {}
 
-  async getBalance(address: string): Promise<Balance | undefined> {
-    const cachedBalance = this.balances.get(address);
-    if (cachedBalance) {
-      return cachedBalance;
+  /**
+   * Retrieve a transaction information.
+   *
+   * @param txid    - Transaction id to retrieve.
+   * @param options - Result options to use when retrieving the transaction.
+   *
+   * @returns transaction information.
+   */
+  async getTransaction(txid: string, options: TransactionOptions = {}): Promise<Transaction | undefined> {
+    const cachedTx = this.transactions.get(txid);
+    if (cachedTx) {
+      return cachedTx;
     }
-    const balance = await get("/balance", { address }, this.network);
-    if (balance !== undefined) {
-      this.balances.set(address, balance);
+    const tx = await this.#request("/transaction", { txid, options });
+    if (tx !== undefined) {
+      this.transactions.set(txid, tx);
     }
-    return balance;
+    return tx;
   }
 
-  async getUnspents(address: string): Promise<Unspent[]> {
+  /**
+   * Retrieve the transactions of an address via cursor.
+   *
+   * @param address - Address to retrieve the transactions for.
+   * @param options - Result options to use when retrieving the transactions.
+   *
+   * @returns list of transactions.
+   */
+  async getTransactions(address: string, options: TransactionsOptions = {}): Promise<Transaction[]> {
+    const cachedTxs = this.address.get(address);
+    if (cachedTxs) {
+      return cachedTxs;
+    }
+    const txs = await this.#request("/transactions", { address, options });
+    if (txs !== undefined) {
+      this.address.set(address, txs);
+    }
+    return txs ?? [];
+  }
+
+  /**
+   * Retrieve the spendable transactions of an address.
+   *
+   * @param address - Address to retrieve the unspents for.
+   * @param options - Result options to use when retrieving the unspents.
+   *
+   * @returns list of unspent utxos.
+   */
+  async getUnspents(address: string, options: UnspentOptions = {}): Promise<Unspent[]> {
     const cachedUnspents = await this.unspents.get(address);
     if (cachedUnspents !== undefined) {
       return cachedUnspents;
     }
-    const unspents = await get("/unspents", { address, options: { nohex: true, nowitness: true } }, this.network);
+    const unspents = await this.#request("/unspents", { address, options });
     if (unspents === undefined) {
       return [];
     }
@@ -42,94 +78,106 @@ export class Lookup {
     return unspents;
   }
 
+  /**
+   * Retrieve the balance of an address.
+   *
+   * @param address - Address to retrieve the balance for.
+   *
+   * @returns balance of the address.
+   */
+  async getBalance(address: string): Promise<Balance | undefined> {
+    const cachedBalance = this.balances.get(address);
+    if (cachedBalance) {
+      return cachedBalance;
+    }
+    const balance = await this.#request("/balance", { address });
+    if (balance !== undefined) {
+      this.balances.set(address, balance);
+    }
+    return balance;
+  }
+
+  /**
+   * Relay a signed transaction to the network.
+   *
+   * @param hex - The signed transaction hex.
+   *
+   * @returns
+   */
+  async relay(hex: string) {
+    return this.#request("/relay", { hex });
+  }
+
   async getInscriptions(outpoint: string): Promise<Inscription[]> {
     const cachedInscriptions = this.inscriptions.get(outpoint);
     if (cachedInscriptions) {
       return cachedInscriptions;
     }
-    const inscriptions = await get("/inscriptions", { outpoint }, this.network);
+    const inscriptions = await this.#request("/inscriptions", { outpoint });
     if (inscriptions !== undefined) {
       this.inscriptions.set(outpoint, inscriptions);
     }
     return inscriptions;
   }
 
-  async getTransaction(txid: string): Promise<Transaction | undefined> {
-    const cachedTx = this.transactions.get(txid);
-    if (cachedTx) {
-      return cachedTx;
+  async #request(path: string, data: unknown): Promise<any> {
+    if (path.indexOf("/") !== 0) {
+      path = "/" + path;
     }
-    const tx = await get("/transaction", { txid }, this.network);
-    if (tx !== undefined) {
-      this.transactions.set(txid, tx);
-    }
-    return tx;
-  }
 
-  async getPrunedTransaction(txid: string): Promise<Transaction | undefined> {
-    const cachedTx = this.prunedTransactions.get(txid);
-    if (cachedTx) {
-      return cachedTx;
-    }
-    const tx = await get(
-      "/transaction",
-      { txid, options: { noord: true, nohex: true, nowitness: true } },
-      this.network
-    );
-    if (tx !== undefined) {
-      this.prunedTransactions.set(txid, tx);
-    }
-    return tx;
-  }
+    const url = config.lookupEndpoint.replace(DEFAULT_NETWORK, this.network) + path;
+    const requestObject: RequestInit = {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    };
 
-  async getTransactions(address: string): Promise<Transaction[]> {
-    const cachedTxs = this.address.get(address);
-    if (cachedTxs) {
-      return cachedTxs;
+    if (data) {
+      requestObject.body = JSON.stringify(data);
+      requestObject.method = "POST";
     }
-    const txs = await get("/transactions", { address }, this.network);
-    if (txs !== undefined) {
-      this.address.set(address, txs);
+
+    log("looking up '%s' '%o'", path, { ...(data ?? {}), network: this.network });
+
+    const response = await fetch(url, requestObject);
+    if (response.status === 200) {
+      const json = await response.json();
+      if (json.success === true && json.rdata !== false) {
+        return json.rdata;
+      }
     }
-    return txs ?? [];
   }
 }
 
 /*
  |--------------------------------------------------------------------------------
- | Request Handler
+ | Request Options
  |--------------------------------------------------------------------------------
  */
 
-async function get(path: string, data: unknown, network: Network): Promise<any> {
-  if (path.indexOf("/") !== 0) {
-    path = "/" + path;
-  }
+type TransactionOptions = {
+  noord?: boolean;
+  nohex?: boolean;
+  nowitness?: boolean;
+};
 
-  const url = config.lookupEndpoint.replace(DEFAULT_NETWORK, network) + path;
-  const requestObject: RequestInit = {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-  };
+type TransactionsOptions = {
+  noord?: boolean;
+  nohex?: boolean;
+  nowitness?: boolean;
+  before?: number;
+  after?: number;
+  limit?: number;
+};
 
-  if (data) {
-    requestObject.body = JSON.stringify(data);
-    requestObject.method = "POST";
-  }
-
-  log("looking up '%s' '%o'", path, { ...(data ?? {}), network });
-
-  const response = await fetch(url, requestObject);
-  if (response.status === 200) {
-    const json = await response.json();
-    if (json.success === true && json.rdata !== false) {
-      return json.rdata;
-    }
-  }
-}
+type UnspentOptions = {
+  noord?: boolean;
+  notsafetospend?: boolean;
+  allowedrarity?: ["common", "uncommon", "rare", "epic", "legendary"];
+  txhex?: boolean;
+};
 
 /*
  |--------------------------------------------------------------------------------
@@ -152,4 +200,5 @@ export type Unspent = {
   value: number;
   ordinals: Ordinal[];
   inscriptions: Inscription[];
+  safeToSpend: boolean;
 };

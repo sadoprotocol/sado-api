@@ -1,9 +1,8 @@
 import "./Methods/Offer";
 import "./Methods/Order";
 import "./Methods/Orderbook";
-import "./Methods/SegWit";
-import "./Methods/Transaction";
 import "./Methods/Taproot";
+import "./Methods/Transaction";
 
 import debug from "debug";
 

@@ -27,6 +27,7 @@
     "mongodb": "^5.3.0",
     "node-fetch": "^2.6.9",
     "p-limit": "^3.1.0",
+    "regtest-client": "^0.2.0",
     "tiny-secp256k1": "^2.2.1",
     "varuint-bitcoin": "^1.1.2",
     "wif": "^2.0.6",

@@ -5,13 +5,9 @@ import { getBip84PrivateKey } from "./Bip84/GetBip84PrivateKey";
 import { getBip84PublicKey } from "./Bip84/GetBip84PublicKey";
 import { createTransaction } from "./CreateTransaction";
 import { createWallet } from "./CreateWallet";
-import { getAddressFromPublicKey } from "./GetAddressFromPublicKey";
-
-api.register("taproot.createTransaction", createTransaction);
 
 api.register("taproot.createWallet", createWallet);
-api.register("taproot.getAddressFromPublicKey", getAddressFromPublicKey);
-
+api.register("taproot.createTransaction", createTransaction);
 api.register("taproot.bip84.getAccount", getBip84Account);
 api.register("taproot.bip84.getPublicKey", getBip84PublicKey);
 api.register("taproot.bip84.getPrivateKey", getBip84PrivateKey);

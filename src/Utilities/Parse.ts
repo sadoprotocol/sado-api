@@ -1,12 +1,12 @@
 import type { TransactionType } from "../Collections/Transaction";
 
 export const parse = {
-  location: parseOrderLocation,
+  location: parseLocation,
   orderbookListing: parseOrderbookListing,
   sado: parseSadoOutput,
 };
 
-function parseOrderLocation(location: string): [string, number] {
+function parseLocation(location: string): [string, number] {
   const [txid, vout] = location.split(":");
   if (txid === undefined || vout === undefined) {
     throw new Error("Invalid location");

@@ -6,13 +6,13 @@ import { validate } from "../../../Validators";
 
 export const getBip84Address = method({
   params: Schema({
-    account: string,
-    change: number,
-    index: number,
     network: validate.schema.network,
+    key: string,
+    type: validate.schema.bip84.type,
+    index: number,
   }),
-  handler: async ({ account, change, index, network }) => {
-    const wallet = Wallet.fromBase58(account, network).derive(`${change}/${index}`);
+  handler: async ({ key, type, index, network }) => {
+    const wallet = Wallet.fromPrivateKey(key, network)[type](index);
     return wallet.address;
   },
 });

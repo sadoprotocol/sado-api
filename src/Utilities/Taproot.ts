@@ -56,10 +56,14 @@ function getMasterNode(mnemonic: string, network: Network): BIP32Interface {
  * @see https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
  *
  * @param masterNode - Master node to derive account key from.
+ * @param network    - Network determining the account coin type. (mainnet or testnet)
  * @param account    - Account number to derive key for.
  *
  * @returns extended public key for the account
  */
-function getBip84Account(masterNode: BIP32Interface, account: number): BIP32Interface {
-  return masterNode.deriveHardened(84).deriveHardened(0).derive(account);
+function getBip84Account(masterNode: BIP32Interface, network: Network, account: number): BIP32Interface {
+  return masterNode
+    .deriveHardened(84)
+    .deriveHardened(network === "mainnet" ? 0 : 1)
+    .derive(account);
 }

@@ -28,6 +28,7 @@ const addressFormats = {
 
 export const bitcoin = {
   getBitcoinNetwork,
+  getAddressType,
   getBitcoinAddress,
   getAddressFromPubKey,
   getWifVersion,
@@ -47,6 +48,23 @@ function getBitcoinNetwork(value: Network): btc.Network {
     return btc.networks.bitcoin;
   }
   return btc.networks[value];
+}
+
+function getAddressType(address: string): Address["type"] | undefined {
+  for (const network of Object.keys(addressFormats) as ["mainnet", "other"]) {
+    if (addressFormats[network].p2pkh.test(address)) {
+      return "p2pkh";
+    }
+    if (addressFormats[network].p2sh.test(address)) {
+      return "p2sh";
+    }
+    if (addressFormats[network].bech32.test(address)) {
+      return "bech32";
+    }
+    if (addressFormats[network].taproot.test(address)) {
+      return "taproot";
+    }
+  }
 }
 
 function getBitcoinAddress(value: string): Address | undefined {

@@ -1,17 +1,21 @@
 import Schema, { number, string } from "computed-types";
 
 import { method } from "../../../Libraries/JsonRpc";
+import { Wallet } from "../../../Libraries/Wallet";
 import { utils } from "../../../Utilities";
 import { validate } from "../../../Validators";
 
 export const getBip84Account = method({
   params: Schema({
+    network: validate.schema.network,
     mnemonic: string,
     account: number,
-    network: validate.schema.network,
   }),
   handler: async ({ mnemonic, account, network }) => {
     const masterNode = utils.taproot.getMasterNode(mnemonic, network);
-    return utils.taproot.getBip84Account(masterNode, account).toBase58();
+    const wallet = Wallet.fromBase58(utils.taproot.getBip84Account(masterNode, network, account).toBase58(), network);
+    return {
+      key: wallet.privateKey?.toString("hex"),
+    };
   },
 });

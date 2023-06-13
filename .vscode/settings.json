@@ -1,4 +1,11 @@
 {
+  "prettier.prettierPath": "./node_modules/prettier",
+  "prettier.configPath": "./.prettierrc",
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   },
@@ -15,8 +22,10 @@
     "btcm",
     "bullmq",
     "CHECKSIG",
+    "CHECKSIGADD",
     "decompile",
     "ecpair",
+    "EQUALVERIFY",
     "fastify",
     "ipfs",
     "keypool",
@@ -39,6 +48,7 @@
     "upserted",
     "utxo",
     "utxos",
+    "varuint",
     "vout",
     "vouts",
     "vsize",
