@@ -2,8 +2,10 @@ import Schema, { array, number, string, unknown } from "computed-types";
 
 import { BadRequestError, NotFoundError } from "../../Libraries/JsonRpc";
 import { method } from "../../Libraries/JsonRpc/Method";
+import { ipfs } from "../../Services/IPFS";
 import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
+import { OrderPayload } from "../../Utilities/Order/OrderPayload";
 import { validate } from "../../Validators";
 
 export const createOrder = method({
@@ -59,7 +61,7 @@ export const createOrder = method({
 
     // ### Store Order
 
-    const cid = "cid-demo-123";
+    const { cid } = await ipfs.uploadJson(toOrderData(params.order, params.signature));
 
     // ### Create PSBT
     // Create a PSBT that relays the order to the network. This stores the order
@@ -70,6 +72,22 @@ export const createOrder = method({
     return { cid, psbt: psbt.toBase64() };
   },
 });
+
+function toOrderData(
+  orderData: OrderPayload,
+  signatureData: SignaturePayload
+): OrderPayload &
+  Omit<SignaturePayload, "value"> & {
+    signature: string;
+  } {
+  return {
+    ...orderData,
+    signature: signatureData.value,
+    format: signatureData.format,
+    pubkey: signatureData.pubkey,
+    desc: signatureData.desc,
+  };
+}
 
 async function validateLocation(location: string, lookup: Lookup): Promise<void> {
   const [txid, index] = utils.parse.location(location);
@@ -82,3 +100,10 @@ async function validateLocation(location: string, lookup: Lookup): Promise<void>
     throw new NotFoundError("Location transaction output does not exist");
   }
 }
+
+type SignaturePayload = {
+  value: string;
+  format?: string;
+  pubkey?: string;
+  desc?: string;
+};

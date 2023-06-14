@@ -1,8 +1,10 @@
 import debug from "debug";
+import FormData from "form-data";
 import fetch from "node-fetch";
 
 import { getIPFS, IPFSCollection, IPFSImage, IPFSOffer, IPFSOrder, setIPFS } from "../Collections/IPFS";
 import { config } from "../Config";
+import { InternalError } from "../Libraries/JsonRpc";
 import { makeObjectKeyChecker } from "../Libraries/Object";
 
 const log = debug("sado-ipfs");
@@ -36,6 +38,7 @@ const hasValidImageKeys = makeObjectKeyChecker(["img"]);
  */
 
 export const ipfs = {
+  uploadJson,
   getOrder,
   getOffer,
   getCollection,
@@ -47,6 +50,23 @@ export const ipfs = {
  | Service Methods
  |--------------------------------------------------------------------------------
  */
+
+async function uploadJson<T extends Record<string, unknown>>(data: T): Promise<IPFSUploadResponse> {
+  const form = new FormData();
+  form.append("file", JSON.stringify(data), "data.json");
+  const response = await fetch(`${config.ipfsApi}/upload`, { method: "POST", body: form });
+  if (response.status === 200) {
+    const data = await response.json();
+    if (data.success === true) {
+      return {
+        cid: data.rdata.address,
+        gateway: data.rdata["ipfs-gateway"],
+      };
+    }
+    throw new Error(data.message);
+  }
+  throw new InternalError("IPFS upload failed");
+}
 
 async function getOrder(cid: string): Promise<IPFSResponse<IPFSOrder>> {
   const data = await get<IPFSOrder>(cid);
@@ -138,3 +158,8 @@ type IPFSResponse<Data extends IPFSData> =
     };
 
 type IPFSData = IPFSOrder | IPFSOffer | IPFSCollection | IPFSImage;
+
+type IPFSUploadResponse = {
+  cid: string;
+  gateway: string;
+};
