@@ -15,6 +15,7 @@ async function start() {
   }
   await limiter.run();
   log("resolved orderbooks");
+  process.exit(0);
 }
 
 start();

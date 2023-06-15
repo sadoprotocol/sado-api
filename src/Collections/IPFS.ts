@@ -35,8 +35,9 @@ export type IPFSOrder = {
   type: OrderType;
   location: string;
   maker: string;
-  cardinals?: string;
-  satoshi?: string;
+  cardinals?: number;
+  expiry?: number;
+  satoshi?: number;
   meta?: Record<string, unknown>;
   orderbooks?: string[];
   signature: string;
@@ -52,9 +53,6 @@ export type IPFSOffer = {
   offer: string;
   offer_format?: string;
   taker: string;
-  signature?: string;
-  signature_format?: string;
-  desc?: string;
 };
 
 export type IPFSCollection = {

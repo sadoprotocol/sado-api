@@ -20,7 +20,7 @@ export const order = {
  */
 function getOrderPrice(order: IPFSOrder): number {
   if (order.cardinals !== undefined) {
-    return parseInt(order.cardinals);
+    return order.cardinals;
   }
   return 0;
 }

@@ -1,33 +1,51 @@
-import Schema, { array, number, string, unknown } from "computed-types";
+import Schema, { array, number, string, Type, unknown } from "computed-types";
 
+import type { IPFSOrder } from "../../Collections/IPFS";
 import { BadRequestError, NotFoundError } from "../../Libraries/JsonRpc";
 import { method } from "../../Libraries/JsonRpc/Method";
 import { ipfs } from "../../Services/IPFS";
 import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
-import { OrderPayload } from "../../Utilities/Order/OrderPayload";
 import { validate } from "../../Validators";
+
+/*
+ |--------------------------------------------------------------------------------
+ | Method Params
+ |--------------------------------------------------------------------------------
+ */
+
+const orderSchema = Schema({
+  type: validate.schema.type,
+  ts: number,
+  location: validate.schema.location,
+  cardinals: number,
+  maker: string,
+  expiry: number.optional(),
+  satoshi: number.optional(),
+  meta: unknown.record(string, unknown).optional(),
+  orderbooks: array.of(string).optional(),
+});
+
+const signatureSchema = Schema({
+  value: string,
+  format: string.optional(),
+  desc: string.optional(),
+});
+
+type OrderSchema = Type<typeof orderSchema>;
+type SignatureSchema = Type<typeof signatureSchema>;
+
+/*
+ |--------------------------------------------------------------------------------
+ | Create Order Method
+ |--------------------------------------------------------------------------------
+ */
 
 export const createOrder = method({
   params: Schema({
     network: validate.schema.network,
-    order: Schema({
-      type: validate.schema.type,
-      ts: number,
-      location: validate.schema.location,
-      cardinals: number,
-      maker: string,
-      expiry: number.optional(),
-      satoshi: number.optional(),
-      meta: unknown.object().optional(),
-      orderbooks: array.of(string).optional(),
-    }),
-    signature: Schema({
-      value: string,
-      format: string.optional(),
-      pubkey: string.optional(),
-      desc: string.optional(),
-    }),
+    order: orderSchema,
+    signature: signatureSchema,
     fees: Schema({
       network: number,
       rate: number,
@@ -61,7 +79,7 @@ export const createOrder = method({
 
     // ### Store Order
 
-    const { cid } = await ipfs.uploadJson(toOrderData(params.order, params.signature));
+    const { cid } = await ipfs.uploadJson<OrderData>(getIPFSOrderData(params.order, params.signature));
 
     // ### Create PSBT
     // Create a PSBT that relays the order to the network. This stores the order
@@ -73,21 +91,11 @@ export const createOrder = method({
   },
 });
 
-function toOrderData(
-  orderData: OrderPayload,
-  signatureData: SignaturePayload
-): OrderPayload &
-  Omit<SignaturePayload, "value"> & {
-    signature: string;
-  } {
-  return {
-    ...orderData,
-    signature: signatureData.value,
-    format: signatureData.format,
-    pubkey: signatureData.pubkey,
-    desc: signatureData.desc,
-  };
-}
+/*
+ |--------------------------------------------------------------------------------
+ | Utilities
+ |--------------------------------------------------------------------------------
+ */
 
 async function validateLocation(location: string, lookup: Lookup): Promise<void> {
   const [txid, index] = utils.parse.location(location);
@@ -101,9 +109,26 @@ async function validateLocation(location: string, lookup: Lookup): Promise<void>
   }
 }
 
-type SignaturePayload = {
-  value: string;
-  format?: string;
-  pubkey?: string;
-  desc?: string;
-};
+function getIPFSOrderData(data: OrderSchema, signature: SignatureSchema): OrderData {
+  return {
+    ts: data.ts,
+    type: data.type,
+    location: data.location,
+    cardinals: data.cardinals,
+    maker: data.maker,
+    expiry: data.expiry,
+    satoshi: data.satoshi,
+    meta: data.meta,
+    signature: signature.value,
+    signature_format: signature.format,
+    desc: signature.desc,
+  };
+}
+
+/*
+ |--------------------------------------------------------------------------------
+ | Types
+ |--------------------------------------------------------------------------------
+ */
+
+type OrderData = Omit<IPFSOrder, "cid">;

@@ -41,6 +41,7 @@ export async function createOrderPsbt(
   // ### Inputs
 
   let total = 0;
+  let fee = 0;
 
   for (const utxo of utxos) {
     const { txid, n, sats } = utxo;
@@ -55,15 +56,15 @@ export async function createOrderPsbt(
     });
 
     total += sats;
+    fee = psbtUtils.getEstimatedFee(psbt, fees.rate) + fees.network;
 
-    if (total >= amount) {
+    if (total - fee >= amount) {
       break;
     }
   }
 
   // ### Fee & Change
 
-  const fee = psbtUtils.getEstimatedFee(psbt, fees.rate) + fees.network;
   const change = total - fee;
   if (change <= 0) {
     throw new BadRequestError("Not enough funds to cover fee");

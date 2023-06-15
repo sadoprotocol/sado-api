@@ -66,7 +66,7 @@ export class Lookup {
    * @returns list of unspent utxos.
    */
   async getUnspents(address: string, options: UnspentOptions = {}): Promise<Unspent[]> {
-    const cachedUnspents = await this.unspents.get(address);
+    const cachedUnspents = this.unspents.get(address);
     if (cachedUnspents !== undefined) {
       return cachedUnspents;
     }
