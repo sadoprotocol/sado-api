@@ -1,9 +1,9 @@
 import * as btc from "bitcoinjs-lib";
 
-import { IPFSOffer, IPFSOrder } from "../Models/IPFS";
-import { Order } from "../Models/Order";
 import { OfferValidationFailed } from "../Exceptions/OfferException";
 import { OrderClosed } from "../Exceptions/OrderException";
+import { IPFSOffer, IPFSOrder } from "../Models/IPFS";
+import { Order } from "../Models/Order";
 import { Lookup } from "../Services/Lookup";
 import { utils } from "../Utilities";
 

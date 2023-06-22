@@ -1,9 +1,9 @@
 import debug from "debug";
 import fetch, { RequestInit } from "node-fetch";
 
-import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Models/Transaction";
 import { config } from "../Config";
 import { DEFAULT_NETWORK, Network } from "../Libraries/Network";
+import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Models/Transaction";
 
 const log = debug("sado-lookup");
 

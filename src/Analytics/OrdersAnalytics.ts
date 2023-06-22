@@ -1,5 +1,5 @@
-import { IPFSOrder } from "../Models/IPFS";
 import { PriceList } from "../Libraries/PriceList";
+import { IPFSOrder } from "../Models/IPFS";
 import { utils } from "../Utilities";
 import { Collections } from "./Collections";
 

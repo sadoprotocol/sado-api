@@ -8,7 +8,7 @@
     "start": "DEBUG=sado-* ts-node-dev ./src/main.ts",
     "worker": "DEBUG=sado-* ts-node ./src/worker.ts",
     "clean": "rm -rf dist",
-    "lint": "eslint ./src --max-warnings 0 --report-unused-disable-directives"
+    "lint": "eslint ./src --max-warnings 0 --report-unused-disable-directives --fix"
   },
   "dependencies": {
     "@fastify/cors": "^8.3.0",

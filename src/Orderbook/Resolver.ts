@@ -1,11 +1,11 @@
 import debug from "debug";
 
+import { Network } from "../Libraries/Network";
 import { addCollection } from "../Models/Collection";
 import { Offer } from "../Models/Offer";
 import { Order } from "../Models/Order";
 import { addOrderbookTransactions, Transaction } from "../Models/Transaction";
 import { addWorker } from "../Models/Worker";
-import { Network } from "../Libraries/Network";
 import { Lookup } from "../Services/Lookup";
 import { sendOfferNotification, sendOrderNotification } from "../Services/Notification";
 import { utils } from "../Utilities";

@@ -1,10 +1,10 @@
 import Schema, { string } from "computed-types";
 
+import { method } from "../../Libraries/JsonRpc/Method";
+import { DEFAULT_NETWORK } from "../../Libraries/Network";
 import { Offer } from "../../Models/Offer";
 import { Order } from "../../Models/Order";
 import { flushTransactions } from "../../Models/Transaction";
-import { method } from "../../Libraries/JsonRpc/Method";
-import { DEFAULT_NETWORK } from "../../Libraries/Network";
 import { resolveOrderbook } from "../../Orderbook/Resolver";
 import { validate } from "../../Validators";
 

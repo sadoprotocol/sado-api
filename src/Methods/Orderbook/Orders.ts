@@ -1,8 +1,8 @@
 import Schema, { string } from "computed-types";
 
-import { Order } from "../../Models/Order";
 import { method } from "../../Libraries/JsonRpc/Method";
 import { DEFAULT_NETWORK } from "../../Libraries/Network";
+import { Order } from "../../Models/Order";
 import { validate } from "../../Validators";
 
 export const getOrderbookOrders = method({

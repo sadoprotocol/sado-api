@@ -1,8 +1,8 @@
 import Schema, { array, number, string, Type, unknown } from "computed-types";
 
-import type { IPFSOrder } from "../../Models/IPFS";
 import { BadRequestError, NotFoundError } from "../../Libraries/JsonRpc";
 import { method } from "../../Libraries/JsonRpc/Method";
+import type { IPFSOrder } from "../../Models/IPFS";
 import { ipfs } from "../../Services/IPFS";
 import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";

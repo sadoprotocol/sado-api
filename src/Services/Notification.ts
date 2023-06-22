@@ -1,10 +1,10 @@
 import debug from "debug";
 import fetch from "node-fetch";
 
+import { config } from "../Config";
 import { cacheNotification, hasNotification } from "../Models/Notification";
 import { Offer } from "../Models/Offer";
 import { Order } from "../Models/Order";
-import { config } from "../Config";
 
 const log = debug("sado:notification");
 

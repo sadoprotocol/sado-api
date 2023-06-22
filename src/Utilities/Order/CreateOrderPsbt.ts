@@ -1,7 +1,7 @@
 import * as btc from "bitcoinjs-lib";
 
-import { Ordinal } from "../../Models/Transaction";
 import { BadRequestError } from "../../Libraries/JsonRpc";
+import { Ordinal } from "../../Models/Transaction";
 import type { Lookup } from "../../Services/Lookup";
 import { parse } from "../Parse";
 import { psbt as psbtUtils } from "../PSBT";
