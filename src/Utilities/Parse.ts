@@ -1,4 +1,4 @@
-import type { TransactionType } from "../Collections/Transaction";
+import type { TransactionType } from "../Models/Transaction";
 
 export const parse = {
   location: parseLocation,

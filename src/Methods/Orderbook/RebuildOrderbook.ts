@@ -1,8 +1,8 @@
 import Schema, { string } from "computed-types";
 
-import { Offer } from "../../Collections/Offer";
-import { Order } from "../../Collections/Order";
-import { flushTransactions } from "../../Collections/Transaction";
+import { Offer } from "../../Models/Offer";
+import { Order } from "../../Models/Order";
+import { flushTransactions } from "../../Models/Transaction";
 import { method } from "../../Libraries/JsonRpc/Method";
 import { DEFAULT_NETWORK } from "../../Libraries/Network";
 import { resolveOrderbook } from "../../Orderbook/Resolver";

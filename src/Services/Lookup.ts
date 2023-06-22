@@ -1,7 +1,7 @@
 import debug from "debug";
 import fetch, { RequestInit } from "node-fetch";
 
-import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Collections/Transaction";
+import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Models/Transaction";
 import { config } from "../Config";
 import { DEFAULT_NETWORK, Network } from "../Libraries/Network";
 

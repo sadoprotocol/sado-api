@@ -1,5 +1,5 @@
-import { IPFSOffer, IPFSOrder } from "../../Collections/IPFS";
-import { Transaction } from "../../Collections/Transaction";
+import { IPFSOffer, IPFSOrder } from "../../Models/IPFS";
+import { Transaction } from "../../Models/Transaction";
 import { Lookup } from "../../Services/Lookup";
 import { BTC_TO_SAT } from "../Bitcoin";
 import { order as orderUtils } from "../Order";

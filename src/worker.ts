@@ -1,6 +1,6 @@
 import debug from "debug";
 
-import { getWorkers } from "./Collections/Worker";
+import { getWorkers } from "./Models/Worker";
 import { resolveOrderbook } from "./Orderbook/Resolver";
 import { utils } from "./Utilities";
 

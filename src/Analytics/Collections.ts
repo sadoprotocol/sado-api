@@ -1,4 +1,4 @@
-import { IPFSOrder } from "../Collections/IPFS";
+import { IPFSOrder } from "../Models/IPFS";
 import { PriceList } from "../Libraries/PriceList";
 
 export class Collections {

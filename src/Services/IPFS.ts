@@ -2,7 +2,7 @@ import debug from "debug";
 import FormData from "form-data";
 import fetch from "node-fetch";
 
-import { getIPFS, IPFSCollection, IPFSImage, IPFSOffer, IPFSOrder, setIPFS } from "../Collections/IPFS";
+import { getIPFS, IPFSCollection, IPFSImage, IPFSOffer, IPFSOrder, setIPFS } from "../Models/IPFS";
 import { config } from "../Config";
 import { InternalError } from "../Libraries/JsonRpc";
 import { makeObjectKeyChecker } from "../Libraries/Object";

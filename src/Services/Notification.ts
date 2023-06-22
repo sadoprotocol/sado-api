@@ -1,9 +1,9 @@
 import debug from "debug";
 import fetch from "node-fetch";
 
-import { cacheNotification, hasNotification } from "../Collections/Notification";
-import { Offer } from "../Collections/Offer";
-import { Order } from "../Collections/Order";
+import { cacheNotification, hasNotification } from "../Models/Notification";
+import { Offer } from "../Models/Offer";
+import { Order } from "../Models/Order";
 import { config } from "../Config";
 
 const log = debug("sado:notification");

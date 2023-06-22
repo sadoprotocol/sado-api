@@ -1,4 +1,4 @@
-import type { Transaction, Vout } from "../Collections/Transaction";
+import type { Transaction, Vout } from "../Models/Transaction";
 import { Lookup } from "../Services/Lookup";
 import { BTC_TO_SAT } from "./Bitcoin";
 

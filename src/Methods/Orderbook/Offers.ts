@@ -1,6 +1,6 @@
 import Schema, { string } from "computed-types";
 
-import { Offer } from "../../Collections/Offer";
+import { Offer } from "../../Models/Offer";
 import { method } from "../../Libraries/JsonRpc/Method";
 import { DEFAULT_NETWORK } from "../../Libraries/Network";
 import { validate } from "../../Validators";

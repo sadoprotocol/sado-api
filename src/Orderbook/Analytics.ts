@@ -1,7 +1,7 @@
 import { OffersAnalytics } from "../Analytics/OffersAnalytics";
 import { OrdersAnalytics } from "../Analytics/OrdersAnalytics";
-import { Offer } from "../Collections/Offer";
-import { Order } from "../Collections/Order";
+import { Offer } from "../Models/Offer";
+import { Order } from "../Models/Order";
 import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
 

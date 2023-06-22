@@ -1,10 +1,10 @@
 import debug from "debug";
 
-import { addCollection } from "../Collections/Collection";
-import { Offer } from "../Collections/Offer";
-import { Order } from "../Collections/Order";
-import { addOrderbookTransactions, Transaction } from "../Collections/Transaction";
-import { addWorker } from "../Collections/Worker";
+import { addCollection } from "../Models/Collection";
+import { Offer } from "../Models/Offer";
+import { Order } from "../Models/Order";
+import { addOrderbookTransactions, Transaction } from "../Models/Transaction";
+import { addWorker } from "../Models/Worker";
 import { Network } from "../Libraries/Network";
 import { Lookup } from "../Services/Lookup";
 import { sendOfferNotification, sendOrderNotification } from "../Services/Notification";

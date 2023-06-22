@@ -1,4 +1,4 @@
-import { IPFSOrder } from "../../Collections/IPFS";
+import { IPFSOrder } from "../../Models/IPFS";
 import { Lookup } from "../../Services/Lookup";
 import { parse } from "../Parse";
 import { createOrderPsbt } from "./CreateOrderPsbt";

@@ -2,11 +2,11 @@ import Schema, { string } from "computed-types";
 
 import { OffersAnalytics } from "../../Analytics/OffersAnalytics";
 import { OrdersAnalytics } from "../../Analytics/OrdersAnalytics";
-import { getCollections } from "../../Collections/Collection";
-import { IPFSCollection } from "../../Collections/IPFS";
-import { Offer } from "../../Collections/Offer";
-import { Order } from "../../Collections/Order";
-import { hasWorker } from "../../Collections/Worker";
+import { getCollections } from "../../Models/Collection";
+import { IPFSCollection } from "../../Models/IPFS";
+import { Offer } from "../../Models/Offer";
+import { Order } from "../../Models/Order";
+import { hasWorker } from "../../Models/Worker";
 import { method } from "../../Libraries/JsonRpc/Method";
 import { DEFAULT_NETWORK, Network } from "../../Libraries/Network";
 import { PriceList } from "../../Libraries/PriceList";
