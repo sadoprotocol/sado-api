@@ -134,6 +134,7 @@ class Api {
           id: request.id,
         };
       } catch (error) {
+        console.log(error);
         result = {
           jsonrpc: "2.0",
           error: error instanceof RpcError ? error : new InternalError(error.message),

@@ -1,11 +1,21 @@
-import type { Transaction, Vout } from "../Models/Transaction";
-import { Lookup } from "../Services/Lookup";
+import type { Ordinal, Transaction, Vout } from "../Models/Transaction";
+import { Lookup, Unspent } from "../Services/Lookup";
 import { BTC_TO_SAT } from "./Bitcoin";
 
 export const transaction = {
   getAddressOutputValue,
   getTransactionVout,
+  getSpendableUtxos,
 };
+
+async function getSpendableUtxos(address: string, filter: string[], lookup: Lookup): Promise<Unspent[]> {
+  const unspents = await lookup
+    .getUnspents(address)
+    .then((unspents) => unspents.filter((unspent) => !filter.includes(unspent.txid)));
+  return unspents
+    .filter((unspent) => hasSpendableRarity(unspent.ordinals) === true && unspent.inscriptions.length === 0)
+    .sort((a, b) => a.sats - b.sats);
+}
 
 /**
  * Get total value of all vouts in satoshis that is associated with the provided address.
@@ -43,4 +53,13 @@ async function getTransactionVout(txid: string, vout: number, lookup: Lookup): P
     return undefined;
   }
   return tx.vout[vout];
+}
+
+function hasSpendableRarity(ordinals: Ordinal[]): boolean {
+  for (const ordinal of ordinals) {
+    if (ordinal.rarity !== "common") {
+      return false;
+    }
+  }
+  return true;
 }

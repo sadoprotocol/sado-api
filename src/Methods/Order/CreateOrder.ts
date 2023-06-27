@@ -58,9 +58,9 @@ export const createOrder = method({
     // ### Maker
     // Get maker details from the bitcoin address.
 
-    const maker = utils.bitcoin.getBitcoinAddress(params.order.maker);
-    if (maker === undefined) {
-      throw new BadRequestError("Maker validation failed");
+    const makerAddressType = utils.bitcoin.getAddressType(params.order.maker);
+    if (makerAddressType === undefined) {
+      throw new BadRequestError("Provided maker address does not match supported address types");
     }
 
     // ### Validate Location
@@ -74,7 +74,7 @@ export const createOrder = method({
     if (params.signature.format === "psbt") {
       validate.order.psbt(params.signature.value, params.order.location);
     } else {
-      validate.order.message(utils.order.toHex(params.order), maker.address, params.signature.value);
+      validate.order.message(utils.order.toHex(params.order), params.order.maker, params.signature.value);
     }
 
     // ### Store Order

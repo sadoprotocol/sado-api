@@ -1,5 +1,6 @@
 import { bitcoin } from "./Bitcoin";
 import { input } from "./Input";
+import { offer } from "./Offer";
 import { order } from "./Order";
 import { parse } from "./Parse";
 import { promise } from "./Promise";
@@ -12,6 +13,7 @@ import { utxo } from "./Utxo";
 export const utils = {
   bitcoin,
   input,
+  offer,
   order,
   parse,
   promise,

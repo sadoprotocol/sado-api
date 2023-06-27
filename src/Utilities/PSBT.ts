@@ -1,13 +1,56 @@
-import * as btc from "bitcoinjs-lib";
+import { address, Network, Psbt, Transaction } from "bitcoinjs-lib";
 
 import { Lookup } from "../Services/Lookup";
 import { bitcoin } from "./Bitcoin";
 
 export const psbt = {
+  toJSON,
   decode,
   getFee,
   getEstimatedFee,
 };
+
+/**
+ * Convert a PSBT to a JSON object.
+ *
+ * @param psbt - PSBT to convert.
+ *
+ * @returns PSBT as a JSON object.
+ */
+function toJSON(psbt: Psbt, network: Network) {
+  return {
+    inputs: psbt.data.inputs.map((input, index) => {
+      const txid = psbt.txInputs[index].hash.reverse().toString("hex");
+      const vout = psbt.txInputs[index].index;
+      const location = `${txid}:${vout}`;
+      if (input.witnessUtxo) {
+        return {
+          txid,
+          vout,
+          location,
+          address: address.fromOutputScript(input.witnessUtxo.script, network),
+          value: input.witnessUtxo.value,
+        };
+      } else if (input.nonWitnessUtxo) {
+        const txin = psbt.txInputs[index];
+        const txout = Transaction.fromBuffer(input.nonWitnessUtxo).outs[txin.index];
+        return {
+          txid,
+          vout,
+          location,
+          address: address.fromOutputScript(txout.script, network),
+          value: txout.value,
+        };
+      } else {
+        throw new Error("Could not get input of #" + index);
+      }
+    }),
+    outputs: psbt.txOutputs.map((o) => ({
+      address: o.address,
+      value: o.value,
+    })),
+  };
+}
 
 /**
  * Attempt to retrieve a PSBT from the psbt string. We try both hex and base64
@@ -17,16 +60,16 @@ export const psbt = {
  *
  * @returns The PSBT or undefined if it could not be parsed.
  */
-function decode(psbt: string): btc.Psbt | undefined {
+function decode(psbt: string): Psbt | undefined {
   try {
-    return btc.Psbt.fromHex(psbt);
+    return Psbt.fromHex(psbt);
   } catch (err) {
     // TODO: Add better check in case the error is not about failure to
     //       parse the hex.
     // not a PSBT hex offer
   }
   try {
-    return btc.Psbt.fromBase64(psbt);
+    return Psbt.fromBase64(psbt);
   } catch (err) {
     // TODO: Add better check in case the error is not about failure to
     //       parse the base64.
@@ -42,7 +85,7 @@ function decode(psbt: string): btc.Psbt | undefined {
  *
  * @returns Estimated fee in satoshis.
  */
-function getEstimatedFee(psbt: btc.Psbt, feeRate = 10): number {
+function getEstimatedFee(psbt: Psbt, feeRate = 10): number {
   let base = 0;
   let virtual = 0;
 
@@ -71,7 +114,7 @@ function getEstimatedFee(psbt: btc.Psbt, feeRate = 10): number {
  *
  * @returns The fee in satoshis.
  */
-async function getFee(psbt: btc.Psbt, lookup: Lookup): Promise<number> {
+async function getFee(psbt: Psbt, lookup: Lookup): Promise<number> {
   let inputSum = 0;
   for (const input of psbt.txInputs) {
     const hash = input.hash.reverse().toString("hex");
@@ -89,4 +132,6 @@ async function getFee(psbt: btc.Psbt, lookup: Lookup): Promise<number> {
   return inputSum - outputSum;
 }
 
-export type PsbtInput = btc.Psbt["data"]["inputs"][number];
+export type PsbtJSON = ReturnType<typeof toJSON>;
+
+export type PsbtInput = Psbt["data"]["inputs"][number];

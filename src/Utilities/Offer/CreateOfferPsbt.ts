@@ -1,41 +1,38 @@
-import * as btc from "bitcoinjs-lib";
+import { address, Network, payments, Psbt } from "bitcoinjs-lib";
 
 import { BadRequestError } from "../../Libraries/JsonRpc";
 import type { Lookup } from "../../Services/Lookup";
 import { parse } from "../Parse";
 import { psbt as psbtUtils } from "../PSBT";
 import { transaction } from "../Transaction";
-import { OrderPayload } from "./OrderPayload";
 
-export async function createOrderPsbt(
-  cid: string,
-  order: OrderPayload,
-  network: btc.Network,
-  fees: { network: number; rate: number },
-  lookup: Lookup
-) {
-  const psbt = new btc.Psbt({ network });
+export async function createOfferPsbt(cid: string, offer: CreateOfferData, lookup: Lookup) {
+  const psbt = new Psbt({ network: offer.network });
 
-  const utxos = await transaction.getSpendableUtxos(order.maker, [], lookup);
+  const utxos = await transaction.getSpendableUtxos(offer.taker, offer.usedUtxos, lookup);
   if (utxos.length === 0) {
-    throw new BadRequestError("No spendable UTXOs found on maker address", {
+    throw new BadRequestError("No spendable UTXOs found on taker address", {
       details: "You need to have at least one spendable UTXO that does not contain any rare ordinals or inscriptions.",
     });
   }
-
   // ### Outputs
 
-  let amount = 0;
+  let amount = 600; // 600 sats for maker output
 
-  for (const orderbook of order.orderbooks ?? []) {
+  for (const orderbook of offer.orderbooks ?? []) {
     const [address, value] = parse.orderbookListing(orderbook);
     amount += value;
     psbt.addOutput({ address, value });
   }
 
   psbt.addOutput({
-    script: btc.payments.embed({ data: [Buffer.from(`sado=order:${cid}`, "utf8")] }).output!,
+    script: payments.embed({ data: [Buffer.from(`sado=offer:${cid}`, "utf8")] }).output!,
     value: 0,
+  });
+
+  psbt.addOutput({
+    address: offer.maker,
+    value: 600,
   });
 
   // ### Inputs
@@ -50,13 +47,13 @@ export async function createOrderPsbt(
       hash: txid,
       index: n,
       witnessUtxo: {
-        script: btc.address.toOutputScript(order.maker, network),
+        script: address.toOutputScript(offer.taker, offer.network),
         value: sats,
       },
     });
 
     total += sats;
-    fee = psbtUtils.getEstimatedFee(psbt, fees.rate) + fees.network;
+    fee = psbtUtils.getEstimatedFee(psbt, offer.fees.rate) + offer.fees.network;
 
     if (total - fee >= amount) {
       break;
@@ -71,9 +68,18 @@ export async function createOrderPsbt(
   }
 
   psbt.addOutput({
-    address: order.maker,
+    address: offer.taker,
     value: change,
   });
 
   return psbt;
 }
+
+type CreateOfferData = {
+  network: Network;
+  maker: string;
+  taker: string;
+  orderbooks: string[];
+  usedUtxos: string[];
+  fees: { network: number; rate: number };
+};

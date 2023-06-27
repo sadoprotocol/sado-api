@@ -3,6 +3,7 @@ import "./Methods/Order";
 import "./Methods/Orderbook";
 import "./Methods/Taproot";
 import "./Methods/Transaction";
+import "./Methods/Utilities";
 
 import debug from "debug";
 

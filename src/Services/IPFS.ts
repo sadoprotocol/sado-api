@@ -53,17 +53,17 @@ export const ipfs = {
 
 async function uploadJson<T extends Record<string, unknown>>(data: T): Promise<IPFSUploadResponse> {
   const form = new FormData();
-  form.append("file", JSON.stringify(data), "data.json");
-  const response = await fetch(`${config.ipfsApi}/upload`, { method: "POST", body: form });
+  form.append("content", JSON.stringify(data), "data.json");
+  form.append("pin", "true");
+  const response = await fetch(`${config.ipfsApi}/ipfs/upload-file`, { method: "POST", body: form });
   if (response.status === 200) {
-    const data = await response.json();
-    if (data.success === true) {
+    const json = await response.json();
+    if (json.success === true) {
       return {
-        cid: data.rdata.address,
-        gateway: data.rdata["ipfs-gateway"],
+        cid: json.data.cid,
+        url: json.data.url,
       };
     }
-    throw new Error(data.message);
   }
   throw new InternalError("IPFS upload failed");
 }
@@ -161,5 +161,5 @@ type IPFSData = IPFSOrder | IPFSOffer | IPFSCollection | IPFSImage;
 
 type IPFSUploadResponse = {
   cid: string;
-  gateway: string;
+  url: string;
 };

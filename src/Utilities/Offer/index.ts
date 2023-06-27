@@ -3,8 +3,10 @@ import { Transaction } from "../../Models/Transaction";
 import { Lookup } from "../../Services/Lookup";
 import { BTC_TO_SAT } from "../Bitcoin";
 import { order as orderUtils } from "../Order";
+import { createOfferPsbt } from "./CreateOfferPsbt";
 
 export const offer = {
+  create: createOfferPsbt,
   getTakerTransaction,
 };
 

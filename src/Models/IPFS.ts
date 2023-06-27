@@ -35,7 +35,7 @@ export type IPFSOrder = {
   type: OrderType;
   location: string;
   maker: string;
-  cardinals?: number;
+  cardinals: number;
   expiry?: number;
   satoshi?: number;
   meta?: Record<string, unknown>;
