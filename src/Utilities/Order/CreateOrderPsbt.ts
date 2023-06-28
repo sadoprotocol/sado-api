@@ -25,7 +25,7 @@ export async function createOrderPsbt(
 
   // ### Outputs
 
-  let amount = 0;
+  let amount = 600; // 600 sats guarantee of change back to the maker
 
   for (const orderbook of order.orderbooks ?? []) {
     const [address, value] = parse.orderbookListing(orderbook);
