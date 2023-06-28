@@ -55,7 +55,7 @@ async function uploadJson<T extends Record<string, unknown>>(data: T): Promise<I
   const form = new FormData();
   form.append("content", JSON.stringify(data), "data.json");
   form.append("pin", "true");
-  const response = await fetch(`${config.ipfsApi}/ipfs/upload-file`, { method: "POST", body: form });
+  const response = await fetch(`${config.ipfsApi}/upload-file`, { method: "POST", body: form });
   if (response.status === 200) {
     const json = await response.json();
     if (json.success === true) {
