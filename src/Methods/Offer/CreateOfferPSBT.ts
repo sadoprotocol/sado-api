@@ -8,7 +8,7 @@ import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
 import { validate } from "../../Validators";
 
-export const createOfferPSBT = method({
+export const createOfferPsbt = method({
   params: Schema({
     network: validate.schema.network,
     cid: string,

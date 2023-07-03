@@ -1,8 +1,10 @@
 import { api } from "../../Api";
+import { createInstantBuyPsbt } from "./CreateInstantBuyPsbt";
 import { createOrder } from "./CreateOrder";
+import { createSignablePsbt } from "./CreateSignablePsbt";
 import { getOrder } from "./GetOrder";
-import { getPSBT } from "./GetPSBT";
 
-api.register("order.createOrder", createOrder);
-api.register("order.getPsbtSignature", getPSBT);
-api.register("order.getOrder", getOrder);
+api.register("CreateOrder", createOrder);
+api.register("CreateInstantBuyPsbt", createInstantBuyPsbt);
+api.register("CreateSignablePsbt", createSignablePsbt);
+api.register("GetOrder", getOrder);

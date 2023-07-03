@@ -8,7 +8,7 @@ import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
 import { validate } from "../../Validators";
 
-export const getPSBT = method({
+export const createSignablePsbt = method({
   params: Schema({
     network: validate.schema.network,
     location: validate.schema.location,

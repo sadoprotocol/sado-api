@@ -8,7 +8,7 @@ import { utils } from "../../Utilities";
 import type { Address } from "../../Utilities/Bitcoin";
 import { validate } from "../../Validators";
 
-export const createPartialTransaction = method({
+export const createTransactionPsbt = method({
   params: Schema({
     network: validate.schema.network,
     sender: string,

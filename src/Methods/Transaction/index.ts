@@ -1,4 +1,4 @@
 import { api } from "../../Api";
-import { createPartialTransaction } from "./CreateTransaction";
+import { createTransactionPsbt } from "./CreateTransactionPsbt";
 
-api.register("transaction.createTransaction", createPartialTransaction);
+api.register("CreateTransactionPsbt", createTransactionPsbt);
