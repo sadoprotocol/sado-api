@@ -1,5 +1,5 @@
 import { api } from "../../Api";
-import { createOrder } from "./CreateOrder";
+import { createOrder } from "./CreateOrder/Method";
 import { createSignablePsbt } from "./CreateSignablePsbt";
 import { getOrder } from "./GetOrder";
 

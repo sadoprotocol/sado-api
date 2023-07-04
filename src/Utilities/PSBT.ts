@@ -22,7 +22,10 @@ function toJSON(psbt: Psbt, network: Network) {
     inputs: psbt.data.inputs.map((input, index) => {
       const txid = psbt.txInputs[index].hash.reverse().toString("hex");
       const vout = psbt.txInputs[index].index;
+
       const location = `${txid}:${vout}`;
+      const signed = input.finalScriptWitness !== undefined || input.finalScriptSig !== undefined;
+
       if (input.witnessUtxo) {
         return {
           txid,
@@ -30,6 +33,7 @@ function toJSON(psbt: Psbt, network: Network) {
           location,
           address: address.fromOutputScript(input.witnessUtxo.script, network),
           value: input.witnessUtxo.value,
+          signed,
         };
       } else if (input.nonWitnessUtxo) {
         const txin = psbt.txInputs[index];
@@ -40,6 +44,7 @@ function toJSON(psbt: Psbt, network: Network) {
           location,
           address: address.fromOutputScript(txout.script, network),
           value: txout.value,
+          signed,
         };
       } else {
         throw new Error("Could not get input of #" + index);

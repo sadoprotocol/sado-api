@@ -1,4 +1,5 @@
 import { BIP32Factory, BIP32Interface } from "bip32";
+import * as bip39 from "bip39";
 import * as btc from "bitcoinjs-lib";
 import * as ecc from "tiny-secp256k1";
 
@@ -25,9 +26,13 @@ export class Wallet {
    |--------------------------------------------------------------------------------
    */
 
-  static fromSeed(mnemonic: string, network: Network): Wallet {
+  static fromMnemonic(mnemonic: string, network: Network): Wallet {
+    return Wallet.fromSeed(bip39.mnemonicToSeedSync(mnemonic).toString("hex"), network);
+  }
+
+  static fromSeed(seed: string, network: Network): Wallet {
     const net = utils.bitcoin.getBitcoinNetwork(network);
-    return new Wallet(bip32.fromSeed(Buffer.from(mnemonic, "hex"), net), net, new Lookup(network));
+    return new Wallet(bip32.fromSeed(Buffer.from(seed, "hex"), net), net, new Lookup(network));
   }
 
   static fromBase58(key: string, network: Network): Wallet {

@@ -1,9 +1,8 @@
-import { PsbtTxInput, Transaction } from "bitcoinjs-lib";
-import * as btcm from "bitcoinjs-message";
+import { Network } from "bitcoinjs-lib";
+import { verify as verifyMessage } from "bitcoinjs-message";
 
 import { BadRequestError } from "../Libraries/JsonRpc";
 import { utils } from "../Utilities";
-import type { PsbtInput } from "../Utilities/PSBT";
 
 export const order = {
   psbt: validatePSBTSignature,
@@ -23,17 +22,22 @@ export const order = {
  * have been signed. It does not do any deeper verification than this as PSBT
  *
  * @param signature - Encoded PSBT to validate.
+ * @param location  - Location to be confirmed in the first input of the PSBT.
+ * @param network   - Network the PSBT was signed for.
  */
-function validatePSBTSignature(signature: string, location: string): void {
+function validatePSBTSignature(signature: string, location: string, network: Network): void {
   const psbt = utils.psbt.decode(signature);
   if (psbt === undefined) {
     throw new BadRequestError("Could not decode PSBT");
   }
-  const input = psbt.data.inputs[0];
-  if (input === undefined || isSigned(input) === false) {
+  const input = utils.psbt.toJSON(psbt, network).inputs[0];
+  if (input === undefined) {
+    throw new BadRequestError("PSBT does not contain any inputs");
+  }
+  if (input.signed === false) {
     throw new BadRequestError("PSBT is not finalized");
   }
-  if (location !== getLocation(input, psbt.txInputs[0])) {
+  if (location !== input.location) {
     throw new BadRequestError("PSBT signature does not match order location");
   }
 }
@@ -46,31 +50,7 @@ function validatePSBTSignature(signature: string, location: string): void {
  * @param signature - Signature to verify.
  */
 function validateMessageSignature(message: string, address: string, signature: string): void {
-  if (btcm.verify(message, address, signature) === false) {
+  if (verifyMessage(message, address, signature) === false) {
     throw new BadRequestError("Message signature is invalid");
   }
-}
-
-/*
- |--------------------------------------------------------------------------------
- | Helpers
- |--------------------------------------------------------------------------------
- */
-
-function isSigned(input: PsbtInput): boolean {
-  return input.finalScriptWitness !== undefined || input.finalScriptSig !== undefined;
-}
-
-function getLocation(input: PsbtInput, txInput: PsbtTxInput): string | undefined {
-  const { nonWitnessUtxo } = input;
-  if (nonWitnessUtxo === undefined) {
-    return undefined;
-  }
-  const transaction = Transaction.fromBuffer(nonWitnessUtxo);
-  const actualTxId = transaction.getId();
-  const expectTxId = txInput.hash.reverse().toString("hex");
-  if (actualTxId !== expectTxId) {
-    return undefined;
-  }
-  return `${expectTxId}:${txInput.index}`;
 }

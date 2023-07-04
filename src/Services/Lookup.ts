@@ -1,9 +1,11 @@
+import { Network as BtcNetwork } from "bitcoinjs-lib";
 import debug from "debug";
 import fetch, { RequestInit } from "node-fetch";
 
 import { config } from "../Config";
 import { DEFAULT_NETWORK, Network } from "../Libraries/Network";
 import { Inscription, Ordinal, ScriptPubKey, Transaction } from "../Models/Transaction";
+import { utils } from "../Utilities";
 
 const log = debug("sado-lookup");
 
@@ -14,8 +16,11 @@ export class Lookup {
   readonly transactions = new Map<string, Transaction>();
   readonly prunedTransactions = new Map<string, Transaction>();
   readonly address = new Map<string, Transaction[]>();
+  readonly btcnetwork: BtcNetwork;
 
-  constructor(readonly network: Network) {}
+  constructor(readonly network: Network) {
+    this.btcnetwork = utils.bitcoin.getBitcoinNetwork(network);
+  }
 
   /**
    * Retrieve a transaction information.

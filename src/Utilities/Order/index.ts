@@ -1,11 +1,9 @@
 import { IPFSOrder } from "../../Models/IPFS";
 import { Lookup } from "../../Services/Lookup";
 import { parse } from "../Parse";
-import { createOrderPsbt } from "./CreateOrderPsbt";
 import { toHex } from "./OrderPayload";
 
 export const order = {
-  create: createOrderPsbt,
   getOwner: getOrderOwner,
   getPrice: getOrderPrice,
   toHex,
