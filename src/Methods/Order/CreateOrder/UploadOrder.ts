@@ -15,6 +15,7 @@ export async function uploadOrder(params: Params): Promise<string> {
     signature: params.signature.value,
     signature_format: params.signature.format,
     desc: params.signature.desc,
+    pubkey: params.signature.pubkey,
   });
   return cid;
 }

@@ -43,6 +43,7 @@ export type IPFSOrder = {
   signature: string;
   signature_format?: string;
   desc?: string;
+  pubkey?: string;
 };
 
 export type IPFSOffer = {
