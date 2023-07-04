@@ -45,7 +45,7 @@ export async function createOrderPsbt(cid: string, params: Params, lookup: Looku
         script: address.toOutputScript(params.order.maker, lookup.btcnetwork),
         value: sats,
       },
-      tapInternalKey: params.pubkey ? Buffer.from(params.pubkey, "hex") : undefined,
+      tapInternalKey: params.signature.pubkey ? Buffer.from(params.signature.pubkey, "hex") : undefined,
     });
 
     total += sats;
