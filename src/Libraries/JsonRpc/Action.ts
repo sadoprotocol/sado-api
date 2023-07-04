@@ -33,7 +33,7 @@ export const response = {
  |--------------------------------------------------------------------------------
  */
 
-export type Action<P extends Record<string, unknown> = Empty> = (
+export type Action<P extends Record<string, unknown> = {}> = (
   req: Partial<Context>,
   res: Response<P>
 ) => Promise<Accept<P> | Reject> | (Accept<P> | Reject);

@@ -9,9 +9,7 @@ import { getCollections } from "../../Models/Collection";
 import { IPFSCollection } from "../../Models/IPFS";
 import { Offer } from "../../Models/Offer";
 import { Order } from "../../Models/Order";
-import { hasWorker } from "../../Models/Worker";
 import { OrderbookAnalytics } from "../../Orderbook/Analytics";
-import { resolveOrderbook } from "../../Orderbook/Resolver";
 import { validate } from "../../Validators";
 
 export const getOrderbook = method({
@@ -26,10 +24,6 @@ export const getOrderbook = method({
 
 export async function getOrderbookByAddress(address: string, network: Network): Promise<Orderbook> {
   const ts = performance.now();
-
-  if ((await hasWorker(address, network)) === false) {
-    await resolveOrderbook(address, network);
-  }
 
   const orders = await Order.getByAddress(address, network);
   const offers = await Offer.getByAddress(address, network);
