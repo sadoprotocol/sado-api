@@ -36,7 +36,7 @@ jobs:
           host: ${{ secrets.EC2_SSH_HOST }}
           username: ${{ secrets.EC2_SSH_USER }}
           script: |
-            PATH=$PATH:/home/ubuntu/.nvm/versions/node/v18.16.0/bin
+            PATH=$PATH:/home/ubuntu/.nvm/versions/node/v18.16.1/bin
             cd ~/sado-api
             npm i
             npm run build
