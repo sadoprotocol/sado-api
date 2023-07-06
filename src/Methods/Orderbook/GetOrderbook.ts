@@ -1,8 +1,8 @@
+import { method } from "@valkyr/api";
 import Schema, { string } from "computed-types";
 
 import { OffersAnalytics } from "../../Analytics/OffersAnalytics";
 import { OrdersAnalytics } from "../../Analytics/OrdersAnalytics";
-import { method } from "../../Libraries/JsonRpc/Method";
 import { DEFAULT_NETWORK, Network } from "../../Libraries/Network";
 import { PriceList } from "../../Libraries/PriceList";
 import { getCollections } from "../../Models/Collection";

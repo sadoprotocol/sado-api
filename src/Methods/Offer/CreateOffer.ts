@@ -1,7 +1,7 @@
+import { BadRequestError, method } from "@valkyr/api";
 import { Network, Psbt } from "bitcoinjs-lib";
 import Schema, { array, number, string } from "computed-types";
 
-import { BadRequestError, method } from "../../Libraries/JsonRpc";
 import { IPFSOrder } from "../../Models/IPFS";
 import { ipfs } from "../../Services/IPFS";
 import { Lookup } from "../../Services/Lookup";

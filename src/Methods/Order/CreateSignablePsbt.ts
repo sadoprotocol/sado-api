@@ -1,8 +1,7 @@
+import { BadRequestError, method } from "@valkyr/api";
 import { payments, Psbt } from "bitcoinjs-lib";
 import Schema, { string } from "computed-types";
 
-import { BadRequestError } from "../../Libraries/JsonRpc";
-import { method } from "../../Libraries/JsonRpc/Method";
 import { Wallet } from "../../Libraries/Wallet";
 import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";

@@ -1,8 +1,8 @@
+import { method } from "@valkyr/api";
 import { bech32 } from "bech32";
 import { address, networks, payments } from "bitcoinjs-lib";
 import { sign, verify } from "bitcoinjs-message";
 
-import { method } from "../../Libraries/JsonRpc";
 import { Wallet } from "../../Libraries/Wallet";
 import { utils } from "../../Utilities";
 

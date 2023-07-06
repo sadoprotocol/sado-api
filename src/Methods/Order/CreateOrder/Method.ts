@@ -1,5 +1,5 @@
-import { BadRequestError, NotFoundError } from "../../../Libraries/JsonRpc";
-import { method } from "../../../Libraries/JsonRpc/Method";
+import { BadRequestError, method, NotFoundError } from "@valkyr/api";
+
 import { Lookup } from "../../../Services/Lookup";
 import { utils } from "../../../Utilities";
 import { validate } from "../../../Validators";

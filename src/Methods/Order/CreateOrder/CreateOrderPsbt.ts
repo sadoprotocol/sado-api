@@ -1,6 +1,6 @@
+import { BadRequestError } from "@valkyr/api";
 import { address, payments, Psbt } from "bitcoinjs-lib";
 
-import { BadRequestError } from "../../../Libraries/JsonRpc";
 import { Lookup } from "../../../Services/Lookup";
 import { utils } from "../../../Utilities";
 import { Params } from "./Params";

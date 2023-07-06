@@ -1,8 +1,7 @@
+import { BadRequestError, method } from "@valkyr/api";
 import * as btc from "bitcoinjs-lib";
 import Schema, { number, string } from "computed-types";
 
-import { BadRequestError } from "../../Libraries/JsonRpc";
-import { method } from "../../Libraries/JsonRpc/Method";
 import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
 import type { Address } from "../../Utilities/Bitcoin";

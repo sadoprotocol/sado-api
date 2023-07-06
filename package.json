@@ -13,6 +13,7 @@
   "dependencies": {
     "@fastify/cors": "^8.3.0",
     "@fastify/helmet": "^10.1.1",
+    "@valkyr/api": "0.23.2",
     "bech32": "^2.0.0",
     "bip32": "^4.0.0",
     "bip39": "^3.1.0",

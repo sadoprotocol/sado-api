@@ -1,7 +1,7 @@
+import { BadRequestError } from "@valkyr/api";
 import { Network } from "bitcoinjs-lib";
 import { verify as verifyMessage } from "bitcoinjs-message";
 
-import { BadRequestError } from "../Libraries/JsonRpc";
 import { utils } from "../Utilities";
 
 export const order = {

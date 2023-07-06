@@ -1,6 +1,6 @@
+import { method } from "@valkyr/api";
 import Schema, { string } from "computed-types";
 
-import { method } from "../../Libraries/JsonRpc/Method";
 import { DEFAULT_NETWORK } from "../../Libraries/Network";
 import { Offer } from "../../Models/Offer";
 import { validate } from "../../Validators";

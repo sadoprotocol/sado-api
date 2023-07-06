@@ -1,5 +1,6 @@
+import { Action, UnauthorizedError } from "@valkyr/api";
+
 import { config } from "../Config";
-import { Action, UnauthorizedError } from "../Libraries/JsonRpc";
 
 export const hasValidToken: Action = async (ctx, res) => {
   const authorization = ctx.headers?.authorization;

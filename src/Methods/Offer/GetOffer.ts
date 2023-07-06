@@ -1,7 +1,6 @@
+import { method, NotAcceptableError } from "@valkyr/api";
 import Schema, { string } from "computed-types";
 
-import { NotAcceptableError } from "../../Libraries/JsonRpc";
-import { method } from "../../Libraries/JsonRpc/Method";
 import { ipfs } from "../../Services/IPFS";
 
 export const getOffer = method({

@@ -1,7 +1,6 @@
+import { BadRequestError, method, NotFoundError } from "@valkyr/api";
 import Schema, { string } from "computed-types";
 
-import { BadRequestError, NotFoundError } from "../../Libraries/JsonRpc";
-import { method } from "../../Libraries/JsonRpc/Method";
 import { ipfs } from "../../Services/IPFS";
 import { utils } from "../../Utilities";
 

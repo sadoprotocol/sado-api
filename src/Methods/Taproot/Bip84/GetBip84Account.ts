@@ -1,6 +1,6 @@
+import { method } from "@valkyr/api";
 import Schema, { number, string } from "computed-types";
 
-import { method } from "../../../Libraries/JsonRpc";
 import { Wallet } from "../../../Libraries/Wallet";
 import { utils } from "../../../Utilities";
 import { validate } from "../../../Validators";
