@@ -20,6 +20,7 @@ export const taproot = {
   generateMnemonic,
   getMasterNode,
   getBip84Account,
+  getPaymentOutput,
 };
 
 /*
@@ -66,4 +67,20 @@ function getBip84Account(masterNode: BIP32Interface, network: Network, account: 
     .deriveHardened(84)
     .deriveHardened(network === "mainnet" ? 0 : 1)
     .derive(account);
+}
+
+/**
+ * Get a taproot script output for a specific internal public key.
+ *
+ * @param internalPubkey - Internal public key to generate output for.
+ * @param network        - Network to generate output for.
+ *
+ * @returns taproot script output.
+ */
+function getPaymentOutput(internalPubkey: Buffer, network: btc.Network): Buffer {
+  const { output } = btc.payments.p2tr({ internalPubkey, network });
+  if (output === undefined) {
+    throw new Error("Failed to generate output");
+  }
+  return output;
 }

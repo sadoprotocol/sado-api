@@ -2,7 +2,6 @@ import { BadRequestError, method } from "@valkyr/api";
 import { payments, Psbt } from "bitcoinjs-lib";
 import Schema, { string } from "computed-types";
 
-import { Wallet } from "../../Libraries/Wallet";
 import { Lookup } from "../../Services/Lookup";
 import { utils } from "../../Utilities";
 import { validate } from "../../Validators";
@@ -16,6 +15,8 @@ export const createSignablePsbt = method({
   }),
   handler: async ({ network, location, maker, pubkey }) => {
     const [hash, index] = utils.parse.location(location);
+    const tapInternalKey = pubkey ? Buffer.from(pubkey, "hex") : undefined;
+    const btcNetwork = utils.bitcoin.getBitcoinNetwork(network);
 
     const address = utils.bitcoin.getBitcoinAddress(maker);
     if (address === undefined) {
@@ -32,18 +33,17 @@ export const createSignablePsbt = method({
       throw new BadRequestError("Provided maker address does not match location output");
     }
 
-    const psbt = new Psbt({ network: utils.bitcoin.getBitcoinNetwork(network) });
+    const psbt = new Psbt({ network: btcNetwork });
 
-    if (pubkey !== undefined) {
-      const wallet = Wallet.fromPublicKey(pubkey, network);
+    if (tapInternalKey !== undefined) {
       psbt.addInput({
         hash,
         index,
         witnessUtxo: {
-          script: wallet.output,
+          script: utils.taproot.getPaymentOutput(tapInternalKey, btcNetwork),
           value: 0,
         },
-        tapInternalKey: wallet.internalPubkey,
+        tapInternalKey,
       });
     } else {
       psbt.addInput({ hash, index });
