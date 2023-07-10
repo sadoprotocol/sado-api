@@ -10,12 +10,21 @@ export const getBip84Account = method({
     network: validate.schema.network,
     mnemonic: string,
     account: number,
+    path: string.optional(),
   }),
-  handler: async ({ mnemonic, account, network }) => {
+  handler: async ({ network, mnemonic, account, path }) => {
     const masterNode = utils.taproot.getMasterNode(mnemonic, network);
-    const wallet = Wallet.fromBase58(utils.taproot.getBip84Account(masterNode, network, account).toBase58(), network);
+
+    let wallet = Wallet.fromBase58(utils.taproot.getBip84Account(masterNode, network, account).toBase58(), network);
+    if (path !== undefined) {
+      wallet = Wallet.fromPrivateKey(wallet.privateKey!.toString("hex"), network).derive(path);
+    }
+
     return {
-      key: wallet.privateKey?.toString("hex"),
+      privateKey: wallet.privateKey?.toString("hex"),
+      publicKey: wallet.publicKey.toString("hex"),
+      xPublicKey: wallet.internalPubkey.toString("hex"),
+      address: wallet.address,
     };
   },
 });
