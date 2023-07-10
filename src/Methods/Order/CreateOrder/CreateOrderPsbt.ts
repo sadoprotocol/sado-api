@@ -3,6 +3,7 @@ import { address, payments, Psbt } from "bitcoinjs-lib";
 
 import { Lookup } from "../../../Services/Lookup";
 import { utils } from "../../../Utilities";
+import { PsbtInput } from "../../../Utilities/PSBT";
 import { Params } from "./Params";
 
 export async function createOrderPsbt(cid: string, params: Params, lookup: Lookup): Promise<Psbt> {
@@ -38,15 +39,20 @@ export async function createOrderPsbt(cid: string, params: Params, lookup: Looku
   for (const utxo of utxos) {
     const { txid, n, sats } = utxo;
 
-    psbt.addInput({
+    const input: PsbtInput = {
       hash: txid,
       index: n,
       witnessUtxo: {
         script: address.toOutputScript(params.order.maker, lookup.btcnetwork),
         value: sats,
       },
-      tapInternalKey: params.signature.pubkey ? Buffer.from(params.signature.pubkey, "hex") : undefined,
-    });
+    };
+
+    if (params.signature.pubkey) {
+      input.tapInternalKey = Buffer.from(params.signature.pubkey, "hex");
+    }
+
+    psbt.addInput(input);
 
     total += sats;
     fee = utils.psbt.getEstimatedFee(psbt, params.fees.rate) + params.fees.network;

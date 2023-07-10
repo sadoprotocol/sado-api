@@ -139,4 +139,8 @@ async function getFee(psbt: Psbt, lookup: Lookup): Promise<number> {
 
 export type PsbtJSON = ReturnType<typeof toJSON>;
 
-export type PsbtInput = Psbt["data"]["inputs"][number];
+export type PsbtInput = Psbt["data"]["inputs"][number] & {
+  hash: string | Buffer;
+  index: number;
+  sequence?: number;
+};
