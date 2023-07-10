@@ -34,8 +34,21 @@ export const createSignablePsbt = method({
     }
 
     const psbt = new Psbt({ network: btcNetwork });
+    const type = utils.bitcoin.getAddressType(maker);
 
-    if (tapInternalKey !== undefined) {
+    if (type === "bech32") {
+      psbt.addInput({
+        hash,
+        index,
+        witnessUtxo: {
+          script: Buffer.from(vout.scriptPubKey.hex, "hex"),
+          value: 0,
+        },
+      });
+    } else if (type === "taproot") {
+      if (tapInternalKey === undefined) {
+        throw new BadRequestError("Taproot address requires a pubkey");
+      }
       psbt.addInput({
         hash,
         index,
