@@ -17,7 +17,9 @@ export const signPsbt = method({
 
     const psbt = Psbt.fromBase64(params.psbt, {
       network: utils.bitcoin.getBitcoinNetwork(params.network),
-    }).signAllInputs(wallet.signer);
+    })
+      .signAllInputs(wallet.signer)
+      .finalizeAllInputs();
 
     return { psbt: psbt.toBase64() };
   },

@@ -55,7 +55,7 @@ export async function createOrderPsbt(cid: string, params: Params, lookup: Looku
     psbt.addInput(input);
 
     total += sats;
-    fee = utils.psbt.getEstimatedFee(psbt, params.fees.rate) + params.fees.network;
+    fee = utils.psbt.getEstimatedFee(psbt, params.satsPerByte);
 
     if (total - fee >= amount) {
       break;

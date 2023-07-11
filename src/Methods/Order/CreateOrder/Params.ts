@@ -21,10 +21,7 @@ export const params = Schema({
     desc: string.optional(),
     pubkey: string.optional(),
   }),
-  fees: Schema({
-    network: number,
-    rate: number,
-  }),
+  satsPerByte: number,
 });
 
 export type Params = Type<typeof params>;

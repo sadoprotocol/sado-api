@@ -85,12 +85,12 @@ function decode(psbt: string): Psbt | undefined {
 /**
  * Make sure to add a higher fee rate if the blockchain is congested.
  *
- * @param psbt    - Psbt to estimate fee for.
- * @param feeRate - Fee rate in satoshis per byte. Default: 10
+ * @param psbt        - Psbt to estimate fee for.
+ * @param satsPerByte - Fee rate in satoshis per byte.
  *
  * @returns Estimated fee in satoshis.
  */
-function getEstimatedFee(psbt: Psbt, feeRate = 10): number {
+function getEstimatedFee(psbt: Psbt, satsPerByte: number): number {
   let base = 0;
   let virtual = 0;
 
@@ -107,7 +107,7 @@ function getEstimatedFee(psbt: Psbt, feeRate = 10): number {
   base += 10; // 10 extra bytes for version, locktime, etc.
   virtual += Math.ceil((base + virtual) / 4); // virtual size is base for non-segwit data plus 1/4 of segwit data
 
-  return virtual * feeRate;
+  return virtual * satsPerByte;
 }
 
 /**

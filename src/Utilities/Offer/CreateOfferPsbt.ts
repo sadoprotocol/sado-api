@@ -53,7 +53,7 @@ export async function createOfferPsbt(cid: string, offer: CreateOfferData, looku
     });
 
     total += sats;
-    fee = psbtUtils.getEstimatedFee(psbt, offer.fees.rate) + offer.fees.network;
+    fee = psbtUtils.getEstimatedFee(psbt, offer.satsPerByte);
 
     if (total - fee >= amount) {
       break;
@@ -81,5 +81,5 @@ type CreateOfferData = {
   taker: string;
   orderbooks: string[];
   usedUtxos: string[];
-  fees: { network: number; rate: number };
+  satsPerByte: number;
 };

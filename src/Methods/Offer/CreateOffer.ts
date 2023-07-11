@@ -18,10 +18,7 @@ export const createOffer = method({
     offer: string,
     taker: string,
     orderbooks: array.of(string).optional(),
-    fees: Schema({
-      network: number,
-      rate: number,
-    }),
+    satsPerByte: number,
   }),
   handler: async (params) => {
     const lookup = new Lookup(params.network);
@@ -63,7 +60,7 @@ export const createOffer = method({
         taker: params.taker,
         orderbooks: params.orderbooks ?? [],
         usedUtxos: getNonSpendableTxids(offer, network),
-        fees: params.fees,
+        satsPerByte: params.satsPerByte,
       },
       lookup
     );
