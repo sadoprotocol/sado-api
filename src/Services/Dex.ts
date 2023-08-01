@@ -20,16 +20,14 @@ async function setDexPrice(): Promise<void> {
   }
 
   const data = await res.json();
-
-  const currency: Currency = {};
   for (const key in data) {
-    currency[key] = {
+    dex[key] = {
       value: data[key].last,
       symbol: data[key].symbol,
     };
   }
 
-  log("USD: %d | SGD: %d | CNY: %d", currency.USD.value, currency.SGD.value, currency.CNY.value);
+  log("USD: %d | SGD: %d | CNY: %d", dex.USD.value, dex.SGD.value, dex.CNY.value);
 }
 
 setDexPrice();
