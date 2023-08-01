@@ -130,7 +130,7 @@ export class Lookup {
       path = "/" + path;
     }
 
-    const url = config.lookupEndpoint.replace(DEFAULT_NETWORK, this.network) + path;
+    const url = config.lookup.endpoint.replace(DEFAULT_NETWORK, this.network) + path;
     const requestObject: RequestInit = {
       method: "GET",
       headers: {

@@ -2,6 +2,7 @@ import { BadRequestError, method, NotFoundError } from "@valkyr/api";
 
 import { Lookup } from "../../../Services/Lookup";
 import { utils } from "../../../Utilities";
+import { order } from "../../../Utilities/Order";
 import { validate } from "../../../Validators";
 import { createOrderPsbt } from "./CreateOrderPsbt";
 import { params } from "./Params";
@@ -28,10 +29,30 @@ export const createOrder = method({
     // ### Validate Signature
     // Make sure that the order is verifiable by the API when it is received.
 
-    if (params.signature.format === "psbt") {
-      validate.order.psbt(params.signature.value, params.order.location, lookup.btcnetwork);
-    } else {
-      validate.order.message(utils.order.toHex(params.order), params.order.maker, params.signature.value);
+    switch (params.signature.format) {
+      case "psbt": {
+        validate.order.signature.psbt(params.signature.value, params.order.location, lookup.btcnetwork);
+        break;
+      }
+      case "ordit": {
+        if (params.signature.pubkey === undefined) {
+          throw new BadRequestError("Signature format 'ordit' requires a public key");
+        }
+        validate.order.signature.ordit(
+          order.toHex(params.order),
+          params.signature.pubkey,
+          params.signature.value,
+          lookup.btcnetwork
+        );
+        break;
+      }
+      case "core": {
+        validate.order.signature.core(order.toHex(params.order), params.order.maker, params.signature.value);
+        break;
+      }
+      default: {
+        throw new BadRequestError(`Signature format ${params.signature.format} is not supported`);
+      }
     }
 
     // ### Store Order

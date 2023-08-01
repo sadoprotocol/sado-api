@@ -1,6 +1,6 @@
-import { db } from "../Services/Mongo";
+import { mongo } from "../Services/Mongo";
 
-export const collection = db.collection<Notification>("notifications");
+export const collection = mongo.db.collection<Notification>("notifications");
 
 /*
  |--------------------------------------------------------------------------------

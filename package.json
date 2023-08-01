@@ -7,6 +7,8 @@
     "build": "tsc",
     "start": "DEBUG=sado-* ts-node-dev ./src/main.ts",
     "worker": "DEBUG=sado-* ts-node ./src/worker.ts",
+    "mongodb:start": "docker compose -f ./docker-compose-mongo.yaml up -d",
+    "mongodb:stop": "docker compose -f  ./docker-compose-mongo.yaml down",
     "clean": "rm -rf dist",
     "lint": "eslint ./src --max-warnings 0 --report-unused-disable-directives --fix"
   },
@@ -30,6 +32,7 @@
     "node-fetch": "^2.6.11",
     "p-limit": "^3.1.0",
     "tiny-secp256k1": "^2.2.2",
+    "varuint-bitcoin": "^1.1.2",
     "ws": "^8.13.0"
   },
   "devDependencies": {

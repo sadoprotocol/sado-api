@@ -1,9 +1,8 @@
 import { BadRequestError } from "@valkyr/api";
-import { address, payments, Psbt } from "bitcoinjs-lib";
+import { payments, Psbt } from "bitcoinjs-lib";
 
 import { Lookup } from "../../../Services/Lookup";
 import { utils } from "../../../Utilities";
-import { PsbtInput } from "../../../Utilities/PSBT";
 import { Params } from "./Params";
 
 export async function createOrderPsbt(cid: string, params: Params, lookup: Lookup): Promise<Psbt> {
@@ -36,23 +35,55 @@ export async function createOrderPsbt(cid: string, params: Params, lookup: Looku
   let total = 0;
   let fee = 0;
 
+  const type = utils.bitcoin.getAddressType(params.order.maker);
+  if (type === undefined) {
+    throw new BadRequestError("Order maker address does not match supported address types.");
+  }
+
+  const pubkey = params.signature.pubkey;
+
   for (const utxo of utxos) {
-    const { txid, n, sats } = utxo;
+    const { txid, n, value } = utxo;
 
-    const input: PsbtInput = {
-      hash: txid,
-      index: n,
-      witnessUtxo: {
-        script: address.toOutputScript(params.order.maker, lookup.btcnetwork),
-        value: sats,
-      },
-    };
+    const sats = utils.bitcoin.btcToSat(value);
 
-    if (params.signature.pubkey) {
-      input.tapInternalKey = Buffer.from(params.signature.pubkey, "hex");
+    switch (type) {
+      case "taproot": {
+        if (pubkey === undefined) {
+          throw new BadRequestError("Taproot address requires a pubkey");
+        }
+        let tapInternalKey = Buffer.from(pubkey, "hex");
+        if (tapInternalKey.length === 33) {
+          tapInternalKey = tapInternalKey.slice(1, 33);
+        }
+        psbt.addInput({
+          hash: txid,
+          index: n,
+          witnessUtxo: {
+            script: utils.taproot.getPaymentOutput(tapInternalKey, lookup.btcnetwork),
+            value: sats,
+          },
+          tapInternalKey,
+        });
+        break;
+      }
+
+      case "bech32": {
+        psbt.addInput({
+          hash: txid,
+          index: n,
+          witnessUtxo: {
+            script: Buffer.from(utxo.scriptPubKey.hex, "hex"),
+            value: sats,
+          },
+        });
+        break;
+      }
+
+      default: {
+        psbt.addInput({ hash: txid, index: n });
+      }
     }
-
-    psbt.addInput(input);
 
     total += sats;
     fee = utils.psbt.getEstimatedFee(psbt, params.satsPerByte);

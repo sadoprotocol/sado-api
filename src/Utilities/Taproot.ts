@@ -1,14 +1,10 @@
-import BIP32Factory, { BIP32Interface } from "bip32";
+import { BIP32Interface } from "bip32";
 import * as bip39 from "bip39";
 import * as btc from "bitcoinjs-lib";
-import * as ecc from "tiny-secp256k1";
 
 import { Network } from "../Libraries/Network";
+import { bip32 } from "./Bip32";
 import { bitcoin } from "./Bitcoin";
-
-const bip32 = BIP32Factory(ecc);
-
-btc.initEccLib(ecc);
 
 /*
  |--------------------------------------------------------------------------------

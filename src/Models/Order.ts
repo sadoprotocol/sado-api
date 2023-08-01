@@ -13,13 +13,13 @@ import { PriceList } from "../Libraries/PriceList";
 import { getTypeMap } from "../Libraries/Response";
 import { ipfs } from "../Services/IPFS";
 import { Lookup } from "../Services/Lookup";
-import { db } from "../Services/Mongo";
+import { mongo } from "../Services/Mongo";
 import { utils } from "../Utilities";
 import { IPFSOrder } from "./IPFS";
 import { Offer } from "./Offer";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
 
-const collection = db.collection<OrderDocument>("orders");
+const collection = mongo.db.collection<OrderDocument>("orders");
 
 export class Order {
   /**

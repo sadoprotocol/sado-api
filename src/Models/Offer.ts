@@ -5,13 +5,13 @@ import { Network } from "../Libraries/Network";
 import { PriceList } from "../Libraries/PriceList";
 import { ipfs } from "../Services/IPFS";
 import { Lookup } from "../Services/Lookup";
-import { db } from "../Services/Mongo";
+import { mongo } from "../Services/Mongo";
 import { utils } from "../Utilities";
 import { validate } from "../Validators";
 import { IPFSOffer, IPFSOrder } from "./IPFS";
 import { Inscription, Ordinal, Transaction, Vout } from "./Transaction";
 
-const collection = db.collection<OfferDocument>("offers");
+const collection = mongo.db.collection<OfferDocument>("offers");
 
 export class Offer {
   /**

@@ -1,9 +1,9 @@
 import { WithId } from "mongodb";
 
 import { Network } from "../Libraries/Network";
-import { db } from "../Services/Mongo";
+import { mongo } from "../Services/Mongo";
 
-export const collection = db.collection<Transaction>("transactions");
+export const collection = mongo.db.collection<Transaction>("transactions");
 
 /*
  |--------------------------------------------------------------------------------

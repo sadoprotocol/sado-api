@@ -1,6 +1,6 @@
-import { db } from "../Services/Mongo";
+import { mongo } from "../Services/Mongo";
 
-export const collection = db.collection<IPFSDocument>("ipfs");
+export const collection = mongo.db.collection<IPFSDocument>("ipfs");
 
 /*
  |--------------------------------------------------------------------------------
@@ -36,6 +36,7 @@ export type IPFSOrder = {
   location: string;
   maker: string;
   cardinals: number;
+  instant?: string;
   expiry?: number;
   satoshi?: number;
   meta?: Record<string, unknown>;

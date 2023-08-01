@@ -1,21 +1,21 @@
 # API Configuration
 
+domain=http://localhost
 PORT=3030
 TOKEN=replacewithsecrettoken
 
-# Databases
+# MONGO
 
-MONGODB_NAME=sado
-MONGODB_URI=mongodb://localhost:27017
+MONGO_HOSTNAME="localhost"
+MONGO_PORT=27017
+MONGO_DATABASE="sado-testnet"
+MONGO_USERNAME=""
+MONGO_PASSWORD=""
 
 # IPFS
 
 IPFS_GATEWAY=http://localhost:8080
 IPFS_API=http://localhost:3009
-
-# Ocean
-
-OCEAN_ENDPOINT=https://ocean.defichain.com/v0/mainnet
 
 # Slack
 

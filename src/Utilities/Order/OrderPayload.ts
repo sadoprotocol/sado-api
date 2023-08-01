@@ -1,29 +1,26 @@
+import Schema, { array, number, string, Type, unknown } from "computed-types";
+
+import { validate } from "../../Validators";
+
+export const orderSchema = Schema({
+  type: validate.schema.type,
+  ts: number,
+  location: validate.schema.location,
+  cardinals: number,
+  maker: string,
+  instant: string.optional(),
+  expiry: number.optional(),
+  satoshi: number.optional(),
+  meta: unknown.record(string, unknown).optional(),
+  orderbooks: array.of(string).optional(),
+});
+
 export function toHex(order: OrderPayload): string {
-  return Buffer.from(
-    JSON.stringify({
-      type: order.type,
-      ts: order.ts,
-      location: order.location,
-      cardinals: order.cardinals,
-      maker: order.maker,
-      expiry: order.expiry,
-      satoshi: order.satoshi,
-      meta: order.meta,
-      orderbooks: order.orderbooks,
-    })
-  ).toString("hex");
+  const data = { ...order };
+  delete data.instant;
+  return Buffer.from(JSON.stringify(data)).toString("hex");
 }
 
-export type OrderPayload = {
-  type: OrderType;
-  ts: number;
-  location: string;
-  cardinals: number;
-  maker: string;
-  expiry?: number;
-  satoshi?: number;
-  meta?: Record<string, any>;
-  orderbooks?: string[];
-};
+export type OrderPayload = Type<typeof orderSchema>;
 
 export type OrderType = "buy" | "sell";

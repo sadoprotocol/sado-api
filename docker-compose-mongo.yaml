@@ -1,0 +1,9 @@
+version: "3"
+services:
+  database:
+    image: mongo:latest
+    container_name: sado-mongo
+    ports:
+      - ${MONGO_PORT}:27017
+    volumes:
+      - ./.mongodb:/data/db

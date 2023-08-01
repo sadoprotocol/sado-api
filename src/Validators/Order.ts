@@ -3,11 +3,15 @@ import { Network } from "bitcoinjs-lib";
 import { verify as verifyMessage } from "bitcoinjs-message";
 
 import { utils } from "../Utilities";
+import { getAddresses } from "../Utilities/Bip32";
 
 export const order = {
-  psbt: validatePSBTSignature,
-  message: validateMessageSignature,
-};
+  signature: {
+    psbt: validatePSBTSignature,
+    ordit: validateOrditSignature,
+    core: validateCoreSignature,
+  },
+} as const;
 
 /*
  |--------------------------------------------------------------------------------
@@ -43,14 +47,31 @@ function validatePSBTSignature(signature: string, location: string, network: Net
 }
 
 /**
+ * Verify that message was signed by the provided public key.
+ *
+ * @param message   - Message to verify.
+ * @param key       - Public key that signed the message.
+ * @param signature - Signature to verify.
+ * @param network   - Network the signature was signed for.
+ */
+function validateOrditSignature(message: string, key: string, signature: string, network: Network): void {
+  const address = getAddresses(key, network).find((address) => address.format === "legacy");
+  if (address === undefined) {
+    throw new BadRequestError("Failed to retrieve legacy address from public key");
+  }
+  validateCoreSignature(message, address.value, Buffer.from(signature, "hex").toString("base64"));
+}
+
+/**
  * Verify that a message was signed by the provided address.
  *
  * @param message   - Message to verify.
  * @param address   - Address that signed the message.
  * @param signature - Signature to verify.
  */
-function validateMessageSignature(message: string, address: string, signature: string): void {
-  if (verifyMessage(message, address, signature) === false) {
+function validateCoreSignature(message: string, address: string, signature: string): void {
+  const verified = verifyMessage(message, address, signature, "", true);
+  if (verified === false) {
     throw new BadRequestError("Message signature is invalid");
   }
 }

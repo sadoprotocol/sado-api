@@ -1,23 +1,15 @@
-import Schema, { array, number, string, Type, unknown } from "computed-types";
+import Schema, { number, string, Type } from "computed-types";
 
+import { orderSchema } from "../../../Utilities/Order/OrderPayload";
 import { validate } from "../../../Validators";
+import { schema } from "../../../Validators/Schema";
 
 export const params = Schema({
   network: validate.schema.network,
-  order: Schema({
-    type: validate.schema.type,
-    ts: number,
-    location: validate.schema.location,
-    cardinals: number,
-    maker: string,
-    expiry: number.optional(),
-    satoshi: number.optional(),
-    meta: unknown.record(string, unknown).optional(),
-    orderbooks: array.of(string).optional(),
-  }),
+  order: orderSchema,
   signature: Schema({
     value: string,
-    format: string.optional(),
+    format: schema.signature.format,
     desc: string.optional(),
     pubkey: string.optional(),
   }),

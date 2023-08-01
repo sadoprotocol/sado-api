@@ -2,15 +2,26 @@ import { envToNumber, getEnvironmentVariable } from "./Libraries/Environment";
 import { DEFAULT_NETWORK } from "./Libraries/Network";
 
 export const config = {
-  port: getEnvironmentVariable("PORT", envToNumber),
-  token: getEnvironmentVariable("TOKEN"),
-  lookupEndpoint: `https://${DEFAULT_NETWORK}.ordit.io/utxo`,
-  ipfsGateway: getEnvironmentVariable("IPFS_GATEWAY"),
-  ipfsApi: getEnvironmentVariable("IPFS_API"),
-  oceanEndpoint: getEnvironmentVariable("OCEAN_ENDPOINT"),
-  mongo: {
-    name: getEnvironmentVariable("MONGODB_NAME"),
-    uri: getEnvironmentVariable("MONGODB_URI"),
+  api: {
+    domain: getEnvironmentVariable("DOMAIN"),
+    port: getEnvironmentVariable("PORT", envToNumber),
+    token: getEnvironmentVariable("TOKEN"),
   },
-  slack: getEnvironmentVariable("SLACK_WEBHOOK_URL"),
+  lookup: {
+    endpoint: `https://${DEFAULT_NETWORK}.ordit.io/utxo`,
+  },
+  ipfs: {
+    gateway: getEnvironmentVariable("IPFS_GATEWAY"),
+    api: getEnvironmentVariable("IPFS_API"),
+  },
+  mongo: {
+    hostname: getEnvironmentVariable("MONGO_HOSTNAME"),
+    port: getEnvironmentVariable("MONGO_PORT", envToNumber),
+    database: getEnvironmentVariable("MONGO_DATABASE"),
+    username: getEnvironmentVariable("MONGO_USERNAME"),
+    password: getEnvironmentVariable("MONGO_PASSWORD"),
+  },
+  slack: {
+    webhook: getEnvironmentVariable("SLACK_WEBHOOK_URL"),
+  },
 };

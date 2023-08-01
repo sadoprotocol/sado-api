@@ -14,7 +14,7 @@ export async function sendOrderNotification({ order }: Order) {
   }
   try {
     await cacheNotification(order.cid);
-    await fetch(config.slack, {
+    await fetch(config.slack.webhook, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -40,7 +40,7 @@ export async function sendOrderNotification({ order }: Order) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*${order.meta?.name ?? "Unnamed"}*\n<${config.ipfsGateway}/ipfs/${order.cid}|View Order>`,
+              text: `*${order.meta?.name ?? "Unnamed"}*\n<${config.ipfs.gateway}/ipfs/${order.cid}|View Order>`,
             },
           },
         ],
@@ -57,7 +57,7 @@ export async function sendOfferNotification({ offer, order }: Offer) {
   }
   try {
     await cacheNotification(offer.cid);
-    await fetch(config.slack, {
+    await fetch(config.slack.webhook, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -76,14 +76,14 @@ export async function sendOfferNotification({ offer, order }: Offer) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `A new offer was just added for <${config.ipfsGateway}/ipfs/${order.cid}|order>.`,
+              text: `A new offer was just added for <${config.ipfs.gateway}/ipfs/${order.cid}|order>.`,
             },
           },
           {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*${order.meta?.name ?? "Unnamed"}*\n<${config.ipfsGateway}/ipfs/${offer.cid}|View Offer>`,
+              text: `*${order.meta?.name ?? "Unnamed"}*\n<${config.ipfs.gateway}/ipfs/${offer.cid}|View Offer>`,
             },
           },
         ],

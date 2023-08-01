@@ -8,8 +8,8 @@
 
 # Development
 
-.bin
 .env
+.mongodb
 
 # Dependencies
 

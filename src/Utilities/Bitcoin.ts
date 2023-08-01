@@ -1,7 +1,7 @@
 import * as btc from "bitcoinjs-lib";
 
 import { Network } from "../Libraries/Network";
-import { dexPrices } from "../Services/DexPrices";
+import { dex } from "../Services/Dex";
 
 export const BTC_TO_SAT = 1e8;
 
@@ -126,7 +126,7 @@ function btcToSat(btc: number): number {
 }
 
 function btcToUsd(btc: number): number {
-  return btc * dexPrices.usd;
+  return btc * dex.USD.value;
 }
 
 function getWifVersion(network: btc.Network): number {

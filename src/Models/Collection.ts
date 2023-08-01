@@ -1,9 +1,9 @@
 import { ipfs } from "../Services/IPFS";
-import { db } from "../Services/Mongo";
+import { mongo } from "../Services/Mongo";
 import { IPFSCollection } from "./IPFS";
 import { Transaction } from "./Transaction";
 
-const collection = db.collection<CollectionDocument>("collections");
+const collection = mongo.db.collection<CollectionDocument>("collections");
 
 export async function addCollection(tx: Transaction): Promise<void> {
   const document = await ipfs.getCollection(tx.cid);

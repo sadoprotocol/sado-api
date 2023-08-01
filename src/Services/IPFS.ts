@@ -55,17 +55,21 @@ async function uploadJson<T extends Record<string, unknown>>(data: T): Promise<I
   const form = new FormData();
   form.append("content", JSON.stringify(data), "data.json");
   form.append("pin", "true");
-  const response = await fetch(`${config.ipfsApi}/upload-file`, { method: "POST", body: form });
-  if (response.status === 200) {
-    const json = await response.json();
-    if (json.success === true) {
-      return {
-        cid: json.data.cid,
-        url: json.data.url,
-      };
-    }
+  const response = await fetch(`${config.ipfs.api}/upload-file`, { method: "POST", body: form });
+
+  if (response.status !== 200) {
+    throw new InternalError(response);
   }
-  throw new InternalError("IPFS upload failed");
+
+  const json = await response.json();
+  if (json.success !== true) {
+    throw new InternalError(json.error);
+  }
+
+  return {
+    cid: json.data.cid,
+    url: json.data.url,
+  };
 }
 
 async function getOrder(cid: string): Promise<IPFSResponse<IPFSOrder>> {
@@ -128,7 +132,7 @@ async function get<Data extends IPFSData>(cid: string): Promise<Data | undefined
   if (document !== undefined) {
     return document as Data;
   }
-  const response = await fetch(config.ipfsGateway + "/ipfs/" + cid, FETCH_REQUEST_DEFAULTS);
+  const response = await fetch(config.ipfs.gateway + "/ipfs/" + cid, FETCH_REQUEST_DEFAULTS);
   if (response.status === 200) {
     const data = await response.json();
     setIPFS(data);
