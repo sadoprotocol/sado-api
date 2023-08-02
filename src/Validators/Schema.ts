@@ -13,7 +13,7 @@ export const schema = {
     type: Schema.either("receive" as const, "change" as const).error("Expected value to be 'receive' or 'change'"),
   },
   signature: {
-    format: Schema.either("psbt" as const, "ordit" as const, "core" as const).error(
+    format: Schema.either("psbt" as const, "ordit" as const, "sliced" as const, "core" as const).error(
       "Expected value to be 'psbt', 'ordit', or 'core'"
     ),
   },

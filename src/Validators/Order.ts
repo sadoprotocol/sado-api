@@ -70,8 +70,29 @@ function validateOrditSignature(message: string, key: string, signature: string,
  * @param signature - Signature to verify.
  */
 function validateCoreSignature(message: string, address: string, signature: string): void {
-  const verified = verifyMessage(message, address, signature, "", true);
-  if (verified === false) {
+  if (
+    verifyMessage(message, address, signature) === false &&
+    fallbackVerification({ message, address, signature }) === false
+  ) {
     throw new BadRequestError("Message signature is invalid");
   }
+}
+
+function fallbackVerification({ message, address, signature }: any) {
+  let isValid = false;
+  const flags = [...Array(12).keys()].map((i) => i + 31);
+  for (const flag of flags) {
+    const flagByte = Buffer.alloc(1);
+    flagByte.writeInt8(flag);
+    let sigBuffer = Buffer.from(signature, "base64").slice(1);
+    sigBuffer = Buffer.concat([flagByte, sigBuffer]);
+    const candidateSig = sigBuffer.toString("base64");
+    try {
+      isValid = verifyMessage(message, address, candidateSig);
+      if (isValid) break;
+    } catch (_) {
+      // ...
+    }
+  }
+  return isValid;
 }

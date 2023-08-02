@@ -46,6 +46,18 @@ export const createOrder = method({
         );
         break;
       }
+      case "sliced": {
+        if (params.signature.pubkey === undefined) {
+          throw new BadRequestError("Signature format 'sliced' requires a public key");
+        }
+        validate.order.signature.ordit(
+          order.toHex(params.order),
+          `03${params.signature.pubkey}`,
+          params.signature.value,
+          lookup.btcnetwork
+        );
+        break;
+      }
       case "core": {
         validate.order.signature.core(order.toHex(params.order), params.order.maker, params.signature.value);
         break;
