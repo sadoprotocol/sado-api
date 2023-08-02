@@ -14,7 +14,6 @@ async function start() {
 
   const limiter = utils.promise.limiter(10);
   const orderbooks = await getWorkers();
-  console.log(orderbooks);
   for (const { address, network } of orderbooks) {
     limiter.push(() => resolveOrderbook(address, network));
   }
