@@ -13,6 +13,7 @@ export async function uploadOrder(params: Params): Promise<string> {
     expiry: params.order.expiry,
     satoshi: params.order.satoshi,
     meta: params.order.meta,
+    orderbooks: params.order.orderbooks,
     signature: params.signature.value,
     signature_format: params.signature.format,
     desc: params.signature.desc,

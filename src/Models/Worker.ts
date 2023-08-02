@@ -3,7 +3,7 @@ import { WithId } from "mongodb";
 import { Network } from "../Libraries/Network";
 import { mongo } from "../Services/Mongo";
 
-export const collection = mongo.db.collection<WorkerDocument>("worker");
+export const collection = mongo.db.collection<WorkerDocument>("workers");
 
 /*
  |--------------------------------------------------------------------------------
